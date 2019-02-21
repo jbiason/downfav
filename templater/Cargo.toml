@@ -3,5 +3,7 @@ name = "templater"
 version = "0.1.0"
 authors = ["Julio Biason <julio.biason@gmail.com>"]
 edition = "2018"
+description = "Generate files based on templates."
 
 [dependencies]
+clap = "2.32"
