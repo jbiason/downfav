@@ -8,10 +8,10 @@ fn main() {
         .unwrap();
     let client = cli::authenticate(registration).unwrap();
 
-    println!("{:?}", client
-             .get_home_timeline().unwrap()
-             .items_iter()
-             .take(100)
-             .collect::<Vec<_>>()
-             );
+    client
+        .favourites().unwrap()
+        .items_iter()
+        .take(2)
+        .for_each(move |record| println!("{:#?}", record))
+        ;
 }
