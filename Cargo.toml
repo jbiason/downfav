@@ -5,4 +5,4 @@ authors = ["Julio Biason <julio.biason@pm.me>"]
 edition = "2018"
 
 [dependencies]
-elefren = "0.19"
+elefren = { version = "0.19", features = ["toml"] }
