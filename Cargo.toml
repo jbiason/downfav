@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 elefren = { version = "0.19", features = ["toml"] }
+html2md = "0.2.9"
