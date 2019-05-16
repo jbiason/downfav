@@ -7,3 +7,5 @@
 **/*.rs.bk
 
 mastodon.toml
+
+data
