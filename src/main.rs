@@ -1,19 +1,20 @@
-use std::path::Path;
-use std::path::PathBuf;
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
+use std::path::PathBuf;
 
-use elefren::prelude::*;
+use elefren::entities::attachment::Attachment;
+use elefren::entities::status::Status;
 use elefren::helpers::cli;
 use elefren::helpers::toml;
-use elefren::entities::status::Status;
-use elefren::entities::attachment::Attachment;
+use elefren::prelude::*;
 
 use reqwest;
 
 use hyper::Uri;
 
-#[macro_use] use log;
+#[macro_use]
+use log;
 use env_logger;
 
 fn main() {
@@ -33,7 +34,8 @@ fn main() {
 
     info!("Starting up...");
     client
-        .favourites().unwrap()
+        .favourites()
+        .unwrap()
         .items_iter()
         .take(2)
         .for_each(move |record| dump_record(record));
@@ -53,8 +55,7 @@ fn toot_dir(record: &Status) -> PathBuf {
 }
 
 fn create_structure(record: &Status) -> () {
-    std::fs::create_dir_all(toot_dir(record))
-        .expect("Failed to create the storage path");
+    std::fs::create_dir_all(toot_dir(record)).expect("Failed to create the storage path");
 }
 
 fn save_content(record: &Status) -> () {
@@ -68,16 +69,19 @@ fn save_content(record: &Status) -> () {
 fn save_attachments(record: &Status) -> () {
     debug!("Saving attachments of {}...", record.id);
     let base_path = toot_dir(&record);
-    record.media_attachments
+    record
+        .media_attachments
         .iter()
         .for_each(move |x| save_attachment(&x, &base_path));
 }
 
-fn save_attachment(attachment: &Attachment, base_path: &PathBuf) -> (){
+fn save_attachment(attachment: &Attachment, base_path: &PathBuf) -> () {
     debug!("Saving attachment {}", attachment.url);
-    let uri:Uri = attachment.url.parse().expect("Invalid URL");
-    let body = reqwest::get(&attachment.url).expect("Failed to connect to server")
-        .text().expect("Failed to retrieve attachment");
+    let uri: Uri = attachment.url.parse().expect("Invalid URL");
+    let body = reqwest::get(&attachment.url)
+        .expect("Failed to connect to server")
+        .text()
+        .expect("Failed to retrieve attachment");
 
     if let Ok(mut fp) = File::create(base_path.join(uri.path())) {
         fp.write_all(body.as_bytes())
