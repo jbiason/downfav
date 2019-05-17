@@ -13,7 +13,6 @@ use reqwest;
 
 use hyper::Uri;
 
-#[macro_use]
 use log;
 use env_logger;
 
@@ -32,7 +31,7 @@ fn main() {
         mastodon
     };
 
-    info!("Starting up...");
+    log::info!("Starting up...");
     client
         .favourites()
         .unwrap()
@@ -42,7 +41,7 @@ fn main() {
 }
 
 fn dump_record(record: Status) -> () {
-    debug!("Retriving record {}", record.id);
+    log::debug!("Retriving record {}", record.id);
     create_structure(&record);
     save_content(&record);
     save_attachments(&record);
@@ -60,14 +59,14 @@ fn create_structure(record: &Status) -> () {
 
 fn save_content(record: &Status) -> () {
     if let Ok(mut fp) = File::create(toot_dir(&record).join("toot.md")) {
-        debug!("Saving content of {}..", record.id);
+        log::debug!("Saving content of {}..", record.id);
         fp.write_all(html2md::parse_html(&record.content).as_bytes())
             .expect("Failed to save content");
     }
 }
 
 fn save_attachments(record: &Status) -> () {
-    debug!("Saving attachments of {}...", record.id);
+    log::debug!("Saving attachments of {}...", record.id);
     let base_path = toot_dir(&record);
     record
         .media_attachments
@@ -76,7 +75,7 @@ fn save_attachments(record: &Status) -> () {
 }
 
 fn save_attachment(attachment: &Attachment, base_path: &PathBuf) -> () {
-    debug!("Saving attachment {}", attachment.url);
+    log::debug!("Saving attachment {}", attachment.url);
     let uri: Uri = attachment.url.parse().expect("Invalid URL");
     let body = reqwest::get(&attachment.url)
         .expect("Failed to connect to server")
