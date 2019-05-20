@@ -277,7 +277,6 @@ dependencies = [
  "elefren 0.19.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "html2md 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "hyper 0.12.28 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

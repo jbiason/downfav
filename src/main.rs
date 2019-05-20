@@ -11,8 +11,6 @@ use elefren::prelude::*;
 
 use reqwest;
 
-use hyper::Uri;
-
 use log;
 use env_logger;
 
@@ -76,14 +74,29 @@ fn save_attachments(record: &Status) -> () {
 
 fn save_attachment(attachment: &Attachment, base_path: &PathBuf) -> () {
     log::debug!("Saving attachment {}", attachment.url);
-    let uri: Uri = attachment.url.parse().expect("Invalid URL");
-    let body = reqwest::get(&attachment.url)
-        .expect("Failed to connect to server")
-        .text()
-        .expect("Failed to retrieve attachment");
+    let filename = base_path.join(get_attachment_filename(&attachment.url));
+    log::debug!("Saving attachment to {:?}", filename);
+    if let Ok(mut fp) = File::create(filename) {
+        reqwest::get(&attachment.url)
+            .expect("Failed to connect to server")
+            .copy_to(&mut fp)
+            .expect("Failed to save attachment");
+    }
+}
 
-    if let Ok(mut fp) = File::create(base_path.join(uri.path())) {
-        fp.write_all(body.as_bytes())
-            .expect("Failed to save the attachment");
+fn get_attachment_filename(url: &str) -> String {
+    let mut frags = url.rsplitn(2, '/');
+    log::debug!("URL fragments: {:?}", frags);
+    if let Some(path_part) = frags.next() { 
+        log::debug!("Found path in the attachment URL: {:?}", path_part);
+        path_part
+            .split('?')
+            .next()
+            .unwrap_or(url)
+            .to_string()
+    } else {
+        // this is, most of the time, bad (due special characters -- like '?' -- and path)
+        log::debug!("No path in attachment, using full URL");
+        url.to_string()
     }
 }
