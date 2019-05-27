@@ -45,9 +45,10 @@ fn main() {
         .take(2)
         .map(|record| { dump_record(&record); record })
         .fold(None, {|first, current| {
-            match first {
-                Some(x) => Some(x),
-                None => Some(current.id)
+            if let Some(_) = first {
+                first
+            } else {
+                Some(current.id)
             }
         }});
     log::debug!("First favourite: {:?}", most_recent_favourite);
