@@ -14,6 +14,10 @@ use reqwest;
 use log;
 use env_logger;
 
+// struct Config {
+//     last_favorite: Option<u>
+// }
+
 fn main() {
     env_logger::init();
 
@@ -29,17 +33,29 @@ fn main() {
         mastodon
     };
 
+    // let last_favorite = if let Ok(fp) 
+
+    let top = "";
     log::info!("Starting up...");
-    client
+    let most_recent_favourite = client
         .favourites()
         .unwrap()
         .items_iter()
+        .take_while(|record| record.id != top)
         .take(2)
-        .for_each(move |record| dump_record(record));
+        .map(|record| { dump_record(&record); record })
+        .fold(None, {|first, current| {
+            match first {
+                Some(x) => Some(x),
+                None => Some(current.id)
+            }
+        }});
+    log::debug!("First favourite: {:?}", most_recent_favourite);
 }
 
-fn dump_record(record: Status) -> () {
+fn dump_record(record: &Status) -> () {
     log::debug!("Retriving record {}", record.id);
+    log::debug!("Content: {:?}", record);
     create_structure(&record);
     save_content(&record);
     save_attachments(&record);
