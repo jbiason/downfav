@@ -6,22 +6,26 @@ use std::path::PathBuf;
 use elefren::entities::attachment::Attachment;
 use elefren::entities::status::Status;
 use elefren::helpers::cli;
-use elefren::helpers::toml;
+use elefren::helpers::toml as elefren_toml;
 use elefren::prelude::*;
 
 use reqwest;
 
 use log;
 use env_logger;
+use toml;
+use serde_derive::Serialize;
+use serde_derive::Deserialize;
 
-// struct Config {
-//     last_favorite: Option<u>
-// }
+#[derive(Serialize, Deserialize)]
+struct Config {
+    last_favorite: String
+}
 
 fn main() {
     env_logger::init();
 
-    let client = if let Ok(data) = toml::from_file("mastodon.toml") {
+    let client = if let Ok(data) = elefren_toml::from_file("mastodon.toml") {
         Mastodon::from(data)
     } else {
         let registration = Registration::new("https://functional.cafe")
@@ -29,20 +33,20 @@ fn main() {
             .build()
             .unwrap();
         let mastodon = cli::authenticate(registration).unwrap();
-        toml::to_file(&*mastodon, "mastodon.toml").unwrap();
+        elefren_toml::to_file(&*mastodon, "mastodon.toml").unwrap();
         mastodon
     };
 
-    // let last_favorite = if let Ok(fp) 
+    let top = get_top_favourite();
 
-    let top = "";
     log::info!("Starting up...");
+    log::debug!("Going all the way till {}", top);
+
     let most_recent_favourite = client
         .favourites()
         .unwrap()
         .items_iter()
         .take_while(|record| record.id != top)
-        .take(2)
         .map(|record| { dump_record(&record); record })
         .fold(None, {|first, current| {
             if let Some(_) = first {
@@ -52,10 +56,32 @@ fn main() {
             }
         }});
     log::debug!("First favourite: {:?}", most_recent_favourite);
+
+    if let Some(id) = most_recent_favourite {
+        let new_configuration = Config { last_favorite: id };
+        let content = toml::to_string(&new_configuration).unwrap();
+
+        if let Ok(mut fp) = File::create("downfav.toml") {
+            fp.write_all(content.as_bytes()).unwrap();
+        }
+    }
+}
+
+fn get_top_favourite() -> String {
+    if let Ok(mut fp) = File::open("downfav.toml") {
+        let mut contents = String::new();
+        fp.read_to_string(&mut contents).unwrap();
+        
+        let config: Config = toml::from_str(&contents)
+            .unwrap_or( Config { last_favorite: "".to_string() } );
+        config.last_favorite
+    } else {
+        "".to_string()
+    }
 }
 
 fn dump_record(record: &Status) -> () {
-    log::debug!("Retriving record {}", record.id);
+    log::debug!("Retrieving record {}", record.id);
     log::debug!("Content: {:?}", record);
     create_structure(&record);
     save_content(&record);
@@ -104,7 +130,7 @@ fn save_attachment(attachment: &Attachment, base_path: &PathBuf) -> () {
 fn get_attachment_filename(url: &str) -> String {
     let mut frags = url.rsplitn(2, '/');
     log::debug!("URL fragments: {:?}", frags);
-    if let Some(path_part) = frags.next() { 
+    if let Some(path_part) = frags.next() {
         log::debug!("Found path in the attachment URL: {:?}", path_part);
         path_part
             .split('?')

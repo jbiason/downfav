@@ -6,7 +6,10 @@ edition = "2018"
 
 [dependencies]
 elefren = { version = "0.19", features = ["toml"] }
-html2md = "0.2.9"
-reqwest = "0.9.17"
-log = "0.4.6"
 env_logger = "0.6.1"
+html2md = "0.2.9"
+log = "0.4.6"
+reqwest = "0.9.17"
+serde = "*"
+serde_derive = "*"
+toml = "0.5"

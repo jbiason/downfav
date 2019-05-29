@@ -7,5 +7,6 @@
 **/*.rs.bk
 
 mastodon.toml
+downfav.toml
 
 data
