@@ -49,7 +49,7 @@ fn main() {
         .take_while(|record| record.id != top)
         .map(|record| { dump_record(&record); record })
         .fold(None, {|first, current| {
-            if let Some(_) = first {
+            if first.is_some() {
                 first
             } else {
                 Some(current.id)
@@ -80,7 +80,7 @@ fn get_top_favourite() -> String {
     }
 }
 
-fn dump_record(record: &Status) -> () {
+fn dump_record(record: &Status) {
     log::debug!("Retrieving record {}", record.id);
     log::debug!("Content: {:?}", record);
     create_structure(&record);
@@ -94,11 +94,11 @@ fn toot_dir(record: &Status) -> PathBuf {
         .join(&record.id)
 }
 
-fn create_structure(record: &Status) -> () {
+fn create_structure(record: &Status) {
     std::fs::create_dir_all(toot_dir(record)).expect("Failed to create the storage path");
 }
 
-fn save_content(record: &Status) -> () {
+fn save_content(record: &Status) {
     if let Ok(mut fp) = File::create(toot_dir(&record).join("toot.md")) {
         log::debug!("Saving content of {}..", record.id);
         fp.write_all(html2md::parse_html(&record.content).as_bytes())
@@ -106,7 +106,7 @@ fn save_content(record: &Status) -> () {
     }
 }
 
-fn save_attachments(record: &Status) -> () {
+fn save_attachments(record: &Status) {
     log::debug!("Saving attachments of {}...", record.id);
     let base_path = toot_dir(&record);
     record
@@ -115,7 +115,7 @@ fn save_attachments(record: &Status) -> () {
         .for_each(move |x| save_attachment(&x, &base_path));
 }
 
-fn save_attachment(attachment: &Attachment, base_path: &PathBuf) -> () {
+fn save_attachment(attachment: &Attachment, base_path: &PathBuf) {
     log::debug!("Saving attachment {}", attachment.url);
     let filename = base_path.join(get_attachment_filename(&attachment.url));
     log::debug!("Saving attachment to {:?}", filename);
