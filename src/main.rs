@@ -1,7 +1,9 @@
 use std::fs::File;
 use std::io::prelude::*;
+use std::io;
 use std::path::Path;
 use std::path::PathBuf;
+use std::time::Duration;
 
 use elefren::entities::attachment::Attachment;
 use elefren::entities::status::Status;
@@ -11,8 +13,6 @@ use elefren::prelude::*;
 
 use reqwest;
 
-use log;
-use env_logger;
 use toml;
 use serde_derive::Serialize;
 use serde_derive::Deserialize;
@@ -23,12 +23,15 @@ struct Config {
 }
 
 fn main() {
-    env_logger::init();
-
     let client = if let Ok(data) = elefren_toml::from_file("mastodon.toml") {
         Mastodon::from(data)
     } else {
-        let registration = Registration::new("https://functional.cafe")
+        println!("Your server URL: ");
+        let mut server = String::new();
+        io::stdin().read_line(&mut server)
+            .expect("You need to enter yoru server URL");
+
+        let registration = Registration::new(server.trim())
             .client_name("downfav")
             .build()
             .unwrap();
@@ -38,9 +41,6 @@ fn main() {
     };
 
     let top = get_top_favourite();
-
-    log::info!("Starting up...");
-    log::debug!("Going all the way till {}", top);
 
     let most_recent_favourite = client
         .favourites()
@@ -55,7 +55,6 @@ fn main() {
                 Some(current.id)
             }
         }});
-    log::debug!("First favourite: {:?}", most_recent_favourite);
 
     if let Some(id) = most_recent_favourite {
         let new_configuration = Config { last_favorite: id };
@@ -81,8 +80,10 @@ fn get_top_favourite() -> String {
 }
 
 fn dump_record(record: &Status) {
-    log::debug!("Retrieving record {}", record.id);
-    log::debug!("Content: {:?}", record);
+    println!("Downloading {}/{}",
+        &record.account.acct,
+        &record.id);
+    dbg!("Content:", record);
     create_structure(&record);
     save_content(&record);
     save_attachments(&record);
@@ -100,14 +101,14 @@ fn create_structure(record: &Status) {
 
 fn save_content(record: &Status) {
     if let Ok(mut fp) = File::create(toot_dir(&record).join("toot.md")) {
-        log::debug!("Saving content of {}..", record.id);
+        dbg!("Saving content of", &record.id);
         fp.write_all(html2md::parse_html(&record.content).as_bytes())
             .expect("Failed to save content");
     }
 }
 
 fn save_attachments(record: &Status) {
-    log::debug!("Saving attachments of {}...", record.id);
+    dbg!("Saving attachments of", &record.id);
     let base_path = toot_dir(&record);
     record
         .media_attachments
@@ -116,11 +117,17 @@ fn save_attachments(record: &Status) {
 }
 
 fn save_attachment(attachment: &Attachment, base_path: &PathBuf) {
-    log::debug!("Saving attachment {}", attachment.url);
+    dbg!("Saving attachment", &attachment.url);
     let filename = base_path.join(get_attachment_filename(&attachment.url));
-    log::debug!("Saving attachment to {:?}", filename);
+    dbg!("Saving attachment to", &filename);
+    println!("\tAttachment: {:?}", &filename);
     if let Ok(mut fp) = File::create(filename) {
-        reqwest::get(&attachment.url)
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(600))
+            .build()
+            .unwrap();
+        client.get(&attachment.url)
+            .send()
             .expect("Failed to connect to server")
             .copy_to(&mut fp)
             .expect("Failed to save attachment");
@@ -129,9 +136,9 @@ fn save_attachment(attachment: &Attachment, base_path: &PathBuf) {
 
 fn get_attachment_filename(url: &str) -> String {
     let mut frags = url.rsplitn(2, '/');
-    log::debug!("URL fragments: {:?}", frags);
+    dbg!("URL fragments:", &frags);
     if let Some(path_part) = frags.next() {
-        log::debug!("Found path in the attachment URL: {:?}", path_part);
+        dbg!("Found path in the attachment URL:", &path_part);
         path_part
             .split('?')
             .next()
@@ -139,7 +146,7 @@ fn get_attachment_filename(url: &str) -> String {
             .to_string()
     } else {
         // this is, most of the time, bad (due special characters -- like '?' -- and path)
-        log::debug!("No path in attachment, using full URL");
+        dbg!("No path in attachment, using full URL");
         url.to_string()
     }
 }

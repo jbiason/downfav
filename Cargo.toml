@@ -1,14 +1,12 @@
 [package]
 name = "downfav"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Julio Biason <julio.biason@pm.me>"]
 edition = "2018"
 
 [dependencies]
 elefren = { version = "0.19", features = ["toml"] }
-env_logger = "0.6.1"
 html2md = "0.2.9"
-log = "0.4.6"
 reqwest = "0.9.17"
 serde = "*"
 serde_derive = "*"
