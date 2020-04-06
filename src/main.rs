@@ -17,30 +17,22 @@ use toml;
 use serde_derive::Serialize;
 use serde_derive::Deserialize;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
+struct JoplinConfig {
+    port: u32,
+    folder: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 struct Config {
-    last_favorite: String
+    last_favorite: String,
+    joplin: Option<JoplinConfig>,
 }
 
 fn main() {
-    let client = if let Ok(data) = elefren_toml::from_file("mastodon.toml") {
-        Mastodon::from(data)
-    } else {
-        println!("Your server URL: ");
-        let mut server = String::new();
-        io::stdin().read_line(&mut server)
-            .expect("You need to enter yoru server URL");
-
-        let registration = Registration::new(server.trim())
-            .client_name("downfav")
-            .build()
-            .unwrap();
-        let mastodon = cli::authenticate(registration).unwrap();
-        elefren_toml::to_file(&*mastodon, "mastodon.toml").unwrap();
-        mastodon
-    };
-
-    let top = get_top_favourite();
+    let config = dbg!(get_config());
+    let client = get_mastodon_connection();
+    let top = config.last_favorite.to_string();
 
     let most_recent_favourite = client
         .favourites()
@@ -56,8 +48,21 @@ fn main() {
             }
         }});
 
+    save_config(&config, most_recent_favourite)
+}
+
+fn save_config(config: &Config, most_recent_favourite: Option<String>) -> () {
     if let Some(id) = most_recent_favourite {
-        let new_configuration = Config { last_favorite: id };
+        let new_configuration = Config {
+            last_favorite: id,
+            joplin: match &config.joplin {
+                None => None,
+                Some(x) => Some(JoplinConfig {
+                    folder: x.folder.to_string(),
+                    port: x.port,
+                })
+            }
+        };
         let content = toml::to_string(&new_configuration).unwrap();
 
         if let Ok(mut fp) = File::create("downfav.toml") {
@@ -66,16 +71,35 @@ fn main() {
     }
 }
 
-fn get_top_favourite() -> String {
+fn get_mastodon_connection() -> Mastodon {
+    if let Ok(data) = elefren_toml::from_file("mastodon.toml") {
+        Mastodon::from(data)
+    } else {
+        print!("Your server URL: ");
+        let mut server = String::new();
+        io::stdin().read_line(&mut server)
+            .expect("You need to enter yoru server URL");
+
+        let registration = Registration::new(server.trim())
+            .client_name("downfav")
+            .build()
+            .unwrap();
+        let mastodon = cli::authenticate(registration).unwrap();
+        elefren_toml::to_file(&*mastodon, "mastodon.toml").unwrap();
+        mastodon
+    }
+}
+
+fn get_config() -> Config {
     if let Ok(mut fp) = File::open("downfav.toml") {
         let mut contents = String::new();
         fp.read_to_string(&mut contents).unwrap();
-        
+
         let config: Config = toml::from_str(&contents)
-            .unwrap_or( Config { last_favorite: "".to_string() } );
-        config.last_favorite
+            .unwrap_or( Config { last_favorite: "".to_string(), joplin: None } );
+        config
     } else {
-        "".to_string()
+        Config { last_favorite: "".to_string(), joplin: None }
     }
 }
 
@@ -83,8 +107,7 @@ fn dump_record(record: &Status) {
     println!("Downloading {}/{}",
         &record.account.acct,
         &record.id);
-    dbg!("Content:", record);
-    create_structure(&record);
+    create_structure(dbg!(&record));
     save_content(&record);
     save_attachments(&record);
 }
@@ -96,32 +119,29 @@ fn toot_dir(record: &Status) -> PathBuf {
 }
 
 fn create_structure(record: &Status) {
+    println!("Current ID: {}", record.id);
     std::fs::create_dir_all(toot_dir(record)).expect("Failed to create the storage path");
 }
 
 fn save_content(record: &Status) {
     if let Ok(mut fp) = File::create(toot_dir(&record).join("toot.md")) {
-        dbg!("Saving content of", &record.id);
         fp.write_all(html2md::parse_html(&record.content).as_bytes())
             .expect("Failed to save content");
     }
 }
 
 fn save_attachments(record: &Status) {
-    dbg!("Saving attachments of", &record.id);
     let base_path = toot_dir(&record);
-    record
-        .media_attachments
+    record.media_attachments
         .iter()
-        .for_each(move |x| save_attachment(&x, &base_path));
+        .for_each(move |x| save_attachment(dbg!(&x), &base_path));
 }
 
 fn save_attachment(attachment: &Attachment, base_path: &PathBuf) {
-    dbg!("Saving attachment", &attachment.url);
-    let filename = base_path.join(get_attachment_filename(&attachment.url));
-    dbg!("Saving attachment to", &filename);
+    let filename = get_attachment_filename(dbg!(&attachment.url));
     println!("\tAttachment: {:?}", &filename);
-    if let Ok(mut fp) = File::create(filename) {
+    let saving_target = dbg!(base_path.join(filename));
+    if let Ok(mut fp) = File::create(saving_target) {
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(600))
             .build()
@@ -136,17 +156,14 @@ fn save_attachment(attachment: &Attachment, base_path: &PathBuf) {
 
 fn get_attachment_filename(url: &str) -> String {
     let mut frags = url.rsplitn(2, '/');
-    dbg!("URL fragments:", &frags);
     if let Some(path_part) = frags.next() {
-        dbg!("Found path in the attachment URL:", &path_part);
-        path_part
+        dbg!(path_part
             .split('?')
             .next()
             .unwrap_or(url)
-            .to_string()
+            .to_string())
     } else {
         // this is, most of the time, bad (due special characters -- like '?' -- and path)
-        dbg!("No path in attachment, using full URL");
-        url.to_string()
+        dbg!(url.to_string())
     }
 }
