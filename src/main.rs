@@ -1,6 +1,6 @@
 use std::fs::File;
-use std::io::prelude::*;
 use std::io;
+use std::io::prelude::*;
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -13,9 +13,9 @@ use elefren::prelude::*;
 
 use reqwest;
 
-use toml;
-use serde_derive::Serialize;
 use serde_derive::Deserialize;
+use serde_derive::Serialize;
+use toml;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct JoplinConfig {
@@ -39,14 +39,19 @@ fn main() {
         .unwrap()
         .items_iter()
         .take_while(|record| record.id != top)
-        .map(|record| { dump_record(&record); record })
-        .fold(None, {|first, current| {
-            if first.is_some() {
-                first
-            } else {
-                Some(current.id)
+        .map(|record| {
+            dump_record(&record);
+            record
+        })
+        .fold(None, {
+            |first, current| {
+                if first.is_some() {
+                    first
+                } else {
+                    Some(current.id)
+                }
             }
-        }});
+        });
 
     save_config(&config, most_recent_favourite)
 }
@@ -60,8 +65,8 @@ fn save_config(config: &Config, most_recent_favourite: Option<String>) -> () {
                 Some(x) => Some(JoplinConfig {
                     folder: x.folder.to_string(),
                     port: x.port,
-                })
-            }
+                }),
+            },
         };
         let content = toml::to_string(&new_configuration).unwrap();
 
@@ -77,7 +82,8 @@ fn get_mastodon_connection() -> Mastodon {
     } else {
         print!("Your server URL: ");
         let mut server = String::new();
-        io::stdin().read_line(&mut server)
+        io::stdin()
+            .read_line(&mut server)
             .expect("You need to enter yoru server URL");
 
         let registration = Registration::new(server.trim())
@@ -95,18 +101,21 @@ fn get_config() -> Config {
         let mut contents = String::new();
         fp.read_to_string(&mut contents).unwrap();
 
-        let config: Config = toml::from_str(&contents)
-            .unwrap_or( Config { last_favorite: "".to_string(), joplin: None } );
+        let config: Config = toml::from_str(&contents).unwrap_or(Config {
+            last_favorite: "".to_string(),
+            joplin: None,
+        });
         config
     } else {
-        Config { last_favorite: "".to_string(), joplin: None }
+        Config {
+            last_favorite: "".to_string(),
+            joplin: None,
+        }
     }
 }
 
 fn dump_record(record: &Status) {
-    println!("Downloading {}/{}",
-        &record.account.acct,
-        &record.id);
+    println!("Downloading {}/{}", &record.account.acct, &record.id);
     create_structure(dbg!(&record));
     save_content(&record);
     save_attachments(&record);
@@ -132,7 +141,8 @@ fn save_content(record: &Status) {
 
 fn save_attachments(record: &Status) {
     let base_path = toot_dir(&record);
-    record.media_attachments
+    record
+        .media_attachments
         .iter()
         .for_each(move |x| save_attachment(dbg!(&x), &base_path));
 }
@@ -146,7 +156,8 @@ fn save_attachment(attachment: &Attachment, base_path: &PathBuf) {
             .timeout(Duration::from_secs(600))
             .build()
             .unwrap();
-        client.get(&attachment.url)
+        client
+            .get(&attachment.url)
             .send()
             .expect("Failed to connect to server")
             .copy_to(&mut fp)
@@ -157,11 +168,7 @@ fn save_attachment(attachment: &Attachment, base_path: &PathBuf) {
 fn get_attachment_filename(url: &str) -> String {
     let mut frags = url.rsplitn(2, '/');
     if let Some(path_part) = frags.next() {
-        dbg!(path_part
-            .split('?')
-            .next()
-            .unwrap_or(url)
-            .to_string())
+        dbg!(path_part.split('?').next().unwrap_or(url).to_string())
     } else {
         // this is, most of the time, bad (due special characters -- like '?' -- and path)
         dbg!(url.to_string())
