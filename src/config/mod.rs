@@ -8,8 +8,9 @@ use toml;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JoplinConfig {
-    port: u32,
-    folder: String,
+    pub port: u32,
+    pub folder: String,
+    pub token: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -37,7 +38,6 @@ impl Config {
         }
     }
 
-
     pub fn save(&self, most_recent_favourite: Option<String>) -> () {
         if let Some(id) = most_recent_favourite {
             let new_configuration = Config {
@@ -46,6 +46,7 @@ impl Config {
                     None => None,
                     Some(x) => Some(JoplinConfig {
                         folder: x.folder.to_string(),
+                        token: x.token.to_string(),
                         port: x.port,
                     }),
                 },

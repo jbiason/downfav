@@ -12,6 +12,7 @@ fn main() {
     let config = dbg!(config::Config::get());
     let client = dbg!(get_mastodon_connection());
     let top = dbg!(config.last_favorite.to_string());
+    let _joplin = crate::storage::joplin::validate(&config);
 
     let most_recent_favourite = client
         .favourites()
@@ -19,7 +20,7 @@ fn main() {
         .items_iter()
         .take_while(|record| record.id != top)
         .map(|record| {
-            let storage = dbg!(storage::filesystem::Filesystem::from(&record));
+            let storage = dbg!(storage::filesystem::Filesystem::from(dbg!(&record)));
             storage.open();
             storage.save();
             record
