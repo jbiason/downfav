@@ -5,7 +5,7 @@ authors = ["Julio Biason <julio.biason@pm.me>"]
 edition = "2018"
 
 [dependencies]
-elefren = { version = "0.19", features = ["toml"] }
+elefren = { version = "0.20", features = ["toml"] }
 html2md = "0.2.9"
 reqwest = "0.9.17"
 serde = "*"
