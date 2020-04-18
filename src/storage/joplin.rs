@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::path::Path;
 
 use reqwest::multipart::Form;
 use reqwest::multipart::Part;
@@ -8,6 +9,8 @@ use serde_derive::Deserialize;
 use crate::config::JoplinConfig;
 use crate::storage::data::Data;
 use crate::storage::storage::Storage;
+
+static INLINABLE: [&'static str; 4] = ["jpeg", "jpg", "png", "gif"];
 
 /// This is the folder structured returned by Joplin. It is here so Reqwests can
 /// unjson the data (there are more fields, but these are the only ones we need
@@ -86,13 +89,28 @@ impl Joplin {
     fn add_resources_to_text(text: &mut String, resources: &Vec<Resource>) {
         resources.iter().for_each(|resource| {
             let link = format!(
-                "![{filename}](:/{resource})",
+                "{inline}[{filename}](:/{resource})",
+                inline = if Joplin::is_inlineable(&resource.filename) {
+                    "!"
+                } else {
+                    ""
+                },
                 filename = resource.filename,
                 resource = resource.id
             );
             text.push_str("\n\n");
             text.push_str(&link);
         });
+    }
+
+    fn is_inlineable(filename: &String) -> bool {
+        if let Some(extension) = Path::new(filename).extension() {
+            INLINABLE
+                .iter()
+                .any(|ext| *ext == extension.to_str().unwrap_or(""))
+        } else {
+            false
+        }
     }
 
     fn save_attachments(&self, record: &Data) -> Vec<Resource> {
@@ -123,10 +141,7 @@ impl Joplin {
     }
 
     fn upload_resource(&self, filename: String, content: Vec<u8>) -> String {
-        let props = format!(
-            "{{\"title\": \"{filename}\", \"filename\": \"{filename}\"}}",
-            filename = &filename,
-        );
+        let props = format!("{{\"title\": \"{filename}\"}}", filename = &filename);
         let data_part = Part::bytes(content).file_name(filename);
         let props_part = Part::text(props);
         let form = Form::new()
