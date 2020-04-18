@@ -1,4 +1,5 @@
 pub mod attachment;
-pub mod filesystem;
-pub mod storage;
 pub mod data;
+pub mod filesystem;
+pub mod joplin;
+pub mod storage;

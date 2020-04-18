@@ -1,7 +1,7 @@
 use std::convert::From;
-use std::fs::File;
-use std::path::Path;
 use std::time::Duration;
+
+use reqwest::Response;
 
 #[derive(Debug)]
 pub struct Attachment {
@@ -18,7 +18,7 @@ impl From<&elefren::entities::attachment::Attachment> for Attachment {
 }
 
 impl Attachment {
-    pub fn get_filename(&self) -> String {
+    pub fn filename(&self) -> String {
         let mut frags = self.url.rsplitn(2, '/');
 
         if let Some(path_part) = frags.next() {
@@ -29,8 +29,7 @@ impl Attachment {
         }
     }
 
-    pub fn download(&self, local_filename: &Path) {
-        let mut fp = File::create(local_filename).expect("Failed to create file");
+    pub fn download(&self) -> Response {
         reqwest::Client::builder()
             .timeout(Duration::from_secs(600))
             .build()
@@ -38,7 +37,5 @@ impl Attachment {
             .get(&self.url)
             .send()
             .unwrap()
-            .copy_to(&mut fp)
-            .unwrap();
     }
 }

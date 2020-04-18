@@ -42,8 +42,9 @@ impl Filesystem {
     /// Save the attachments.
     fn save_attachments(&self, data: &Data) {
         data.attachments.iter().for_each(|attachment| {
-            let filename = self.dir(data).join(attachment.get_filename());
-            attachment.download(filename.as_path());
+            let filename = self.dir(data).join(attachment.filename());
+            let mut fp = File::create(filename).expect("Failed to create file");
+            attachment.download().copy_to(&mut fp).unwrap();
         })
     }
 }

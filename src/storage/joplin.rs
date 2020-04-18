@@ -1,72 +1,159 @@
-use crate::config::Config;
-use crate::config::JoplinConfig;
+use std::collections::HashMap;
 
+use reqwest::multipart::Form;
+use reqwest::multipart::Part;
 use reqwest::Error;
-use reqwest::Url;
 use serde_derive::Deserialize;
+
+use crate::config::JoplinConfig;
+use crate::storage::data::Data;
+use crate::storage::storage::Storage;
 
 /// This is the folder structured returned by Joplin. It is here so Reqwests can
 /// unjson the data (there are more fields, but these are the only ones we need
 /// right now).
 #[allow(dead_code)]
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct Folder {
     id: String,
     title: String,
 }
 
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+struct Resource {
+    id: String,
+    filename: String,
+}
+
 /// Connection to Joplin.
-pub struct JoplinConnection {
+pub struct Joplin {
     port: u32,
     token: String,
     folder_id: String,
+    client: reqwest::Client,
 }
 
-pub fn validate(config: &Config) -> Option<JoplinConnection> {
-    if let Some(joplin_config) = &config.joplin {
-        let folder_id = dbg!(get_folder_id(&joplin_config));
-
-        if let Some(folder) = folder_id {
-            Some(JoplinConnection {
-                port: joplin_config.port,
-                token: joplin_config.token.to_string(),
-                folder_id: folder,
-            })
-        } else {
-            println!("No folder named {}", joplin_config.folder);
-            None
-        }
-    } else {
-        println!("Joplin not set up");
-        None
+impl Storage for Joplin {
+    fn save(&self, record: &Data) {
+        let resources = dbg!(self.save_attachments(&record));
+        let mut text = record.text.to_string();
+        let title = format!("{}/{}", record.account, record.id);
+        Joplin::add_resources_to_text(&mut text, &resources);
+        dbg!(self.save_content(&title, &text, &record.source));
     }
 }
 
-fn build_url(config: &JoplinConfig, resource: &String) -> Url {
-    let base_url = format!(
-        "http://localhost:{port}/{resource}?token={token}",
-        port = config.port,
-        resource = resource,
-        token = config.token
-    );
-    let url = Url::parse(&base_url);
-    url.unwrap()
-}
-
-fn get_folder_id(config: &JoplinConfig) -> Option<String> {
-    let request = get_folder_list(config);
-    if let Ok(folders) = request {
-        for folder in folders {
-            if folder.title == *config.folder {
-                return Some(folder.id);
+impl Joplin {
+    pub fn new_from_config(config: &JoplinConfig) -> Joplin {
+        if let Some(folder_id) = Joplin::find_folder(config) {
+            Joplin {
+                port: config.port,
+                token: config.token.to_string(),
+                folder_id: folder_id,
+                client: reqwest::Client::new(),
             }
+        } else {
+            println!("The notebook {} does not exist", &config.folder);
+            panic!("The specified notebook does not exist");
         }
     }
-    None
-}
 
-fn get_folder_list(config: &JoplinConfig) -> Result<Vec<Folder>, Error> {
-    let folders: Vec<Folder> =
-        reqwest::get(&build_url(config, &String::from("folders")).into_string())?.json()?;
-    Ok(folders)
+    fn find_folder(config: &JoplinConfig) -> Option<String> {
+        if let Ok(folders) = dbg!(Joplin::get_folder_list(config)) {
+            for folder in folders {
+                if folder.title == *config.folder {
+                    return Some(folder.id);
+                }
+            }
+            None
+        } else {
+            println!("Failed to retrieve the notebook list");
+            panic!("Failed to retrieve Joplin notebook list");
+        }
+    }
+
+    fn get_folder_list(config: &JoplinConfig) -> Result<Vec<Folder>, Error> {
+        let base_url = format!(
+            "http://localhost:{port}/folders?token={token}",
+            port = config.port,
+            token = config.token
+        );
+        let folders: Vec<Folder> = reqwest::get(&base_url)?.json()?;
+        Ok(folders)
+    }
+
+    fn add_resources_to_text(text: &mut String, resources: &Vec<Resource>) {
+        resources.iter().for_each(|resource| {
+            let link = format!(
+                "![{filename}](:/{resource})",
+                filename = resource.filename,
+                resource = resource.id
+            );
+            text.push_str("\n\n");
+            text.push_str(&link);
+        });
+    }
+
+    fn save_attachments(&self, record: &Data) -> Vec<Resource> {
+        record
+            .attachments
+            .iter()
+            .map(|attachment| {
+                let mut buffer: Vec<u8> = vec![];
+                attachment.download().copy_to(&mut buffer).unwrap();
+                let resource_id =
+                    dbg!(self.upload_resource(attachment.filename().to_string(), buffer));
+
+                Resource {
+                    id: resource_id,
+                    filename: attachment.filename().to_string(),
+                }
+            })
+            .collect()
+    }
+
+    fn base_url(&self, resource: &str) -> String {
+        format!(
+            "http://localhost:{port}/{resource}?token={token}",
+            port = self.port,
+            token = self.token,
+            resource = resource
+        )
+    }
+
+    fn upload_resource(&self, filename: String, content: Vec<u8>) -> String {
+        let props = format!(
+            "{{\"title\": \"{filename}\", \"filename\": \"{filename}\"}}",
+            filename = &filename,
+        );
+        let data_part = Part::bytes(content).file_name(filename);
+        let props_part = Part::text(props);
+        let form = Form::new()
+            .part("data", data_part)
+            .part("props", props_part);
+        let resource: Resource = self
+            .client
+            .post(&self.base_url("resources"))
+            .multipart(form)
+            .send()
+            .unwrap()
+            .json()
+            .unwrap();
+        resource.id
+    }
+
+    fn save_content(&self, title: &String, text: &String, source: &String) {
+        let mut request = HashMap::new();
+        request.insert("parent_id", &self.folder_id);
+        request.insert("title", &title);
+        request.insert("body", &text);
+        request.insert("source_url", &source);
+
+        self.client
+            .post(&self.base_url("notes"))
+            .json(&request)
+            .send()
+            .unwrap();
+    }
 }

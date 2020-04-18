@@ -6,8 +6,8 @@ edition = "2018"
 
 [dependencies]
 elefren = { version = "0.20", features = ["toml"] }
-html2md = "0.2.9"
-reqwest = "0.9.17"
+html2md = "0.2"
+reqwest = "0.9"
 serde = "*"
 serde_derive = "*"
 toml = "0.5"

@@ -12,6 +12,7 @@ pub struct Data {
     pub account: String,
     pub text: String,
     pub attachments: Vec<Attachment>,
+    pub source: String,
 }
 
 /// Convert the incoming Status from Elefren to ours.
@@ -28,6 +29,7 @@ impl From<&Status> for Data {
                 .iter()
                 .map(|attachment| Attachment::from(attachment))
                 .collect(),
+            source: origin.url.as_ref().unwrap_or(&String::new()).to_string(),
         }
     }
 }
@@ -52,7 +54,7 @@ fn build_text(status: &Status) -> String {
     result.push_str(&html2md::parse_html(&base_content));
 
     if let Some(url) = source {
-        result.push_str("\n");
+        result.push_str("\n\n");
         result.push_str(&url);
     }
 

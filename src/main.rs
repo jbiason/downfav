@@ -1,10 +1,12 @@
 use std::io;
 
-use crate::storage::data::Data;
-use crate::storage::filesystem::Filesystem;
 use elefren::helpers::cli;
 use elefren::helpers::toml as elefren_toml;
 use elefren::prelude::*;
+
+use crate::storage::data::Data;
+use crate::storage::filesystem::Filesystem;
+use crate::storage::joplin::Joplin;
 
 mod config;
 mod storage;
@@ -13,8 +15,12 @@ fn main() {
     let config = dbg!(config::Config::get());
     let client = dbg!(get_mastodon_connection());
     let top = dbg!(config.last_favorite.to_string());
-    // let _joplin = crate::storage::joplin::validate(&config);
-    let save_to = Filesystem::new();
+    let joplin_storage = if let Some(joplin_config) = &config.joplin {
+        Some(Joplin::new_from_config(&joplin_config))
+    } else {
+        None
+    };
+    let fs_storage = Filesystem::new();
 
     let most_recent_favourite = client
         .favourites()
@@ -23,7 +29,11 @@ fn main() {
         .take_while(|record| dbg!(record).id != top)
         .map(|record| {
             let conversion = dbg!(Data::from(dbg!(&record)));
-            conversion.save(&save_to);
+            if let Some(joplin) = &joplin_storage {
+                conversion.save(joplin);
+            } else {
+                conversion.save(&fs_storage);
+            }
             record
         })
         .fold(None, {
