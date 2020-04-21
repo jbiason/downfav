@@ -23,7 +23,7 @@ impl From<&Status> for Data {
         Self {
             id: origin.id.to_string(),
             account: origin.account.acct.to_string(),
-            text: build_text(origin),
+            text: dbg!(build_text(origin)),
             attachments: origin
                 .media_attachments
                 .iter()
@@ -48,10 +48,10 @@ fn build_text(status: &Status) -> String {
     let mut result = String::new();
     if title.len() > 0 {
         result.push_str(title);
-        result.push_str("\n");
+        result.push_str("\n\n");
     }
 
-    result.push_str(&html2md::parse_html(&base_content));
+    result.push_str(&base_content);
 
     if let Some(url) = source {
         result.push_str("\n\n");
