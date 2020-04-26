@@ -1,6 +1,6 @@
 [package]
 name = "downfav"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Julio Biason <julio.biason@pm.me>"]
 edition = "2018"
 

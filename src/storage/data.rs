@@ -22,7 +22,6 @@ use elefren::entities::status::Status;
 use html2md;
 
 use crate::storage::attachment::Attachment;
-use crate::storage::storage::Storage;
 
 /// Our data content.
 #[derive(Debug)]
@@ -50,12 +49,6 @@ impl From<&Status> for Data {
                 .collect(),
             source: origin.url.as_ref().unwrap_or(&String::new()).to_string(),
         }
-    }
-}
-
-impl Data {
-    pub fn save<T: Storage>(&self, storage: &T) {
-        storage.save(self);
     }
 }
 
