@@ -260,7 +260,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "downfav"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "elefren 0.20.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "html2md 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",

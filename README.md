@@ -38,3 +38,7 @@ The next section, `[joplin]` must be added manually, if you want to save your
 favorites into Joplin. The first two fields are the same used by the web
 clipper, and you can check those two directly in the configuration panel. The
 last one is the name of the notebook in which you want to keep the toots.
+
+## License
+
+GNU AFFERO GENERAL PUBLIC LICENSE, Version 3.
