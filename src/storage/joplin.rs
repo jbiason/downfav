@@ -35,6 +35,13 @@ static INLINABLE: [&'static str; 4] = ["jpeg", "jpg", "png", "gif"];
 /// right now).
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
+struct FolderList {
+    items: Vec<Folder>,
+    has_more: bool,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
 struct Folder {
     id: String,
     title: String,
@@ -95,12 +102,31 @@ impl Joplin {
     }
 
     fn get_folder_list(config: &JoplinConfig) -> Result<Vec<Folder>, Error> {
-        let base_url = format!(
-            "http://localhost:{port}/folders?token={token}",
-            port = config.port,
-            token = config.token
-        );
-        let folders: Vec<Folder> = reqwest::get(&base_url)?.json()?;
+        let mut page = 1;
+        let mut has_more = true;
+        let mut folders: Vec<Folder> = Vec::new();
+
+        while has_more {
+            let base_url = dbg!(format!(
+                "http://localhost:{port}/folders?token={token}&page={page}",
+                port = config.port,
+                token = config.token,
+                page = page
+            ));
+            let folder_list: FolderList = reqwest::get(&base_url)?.json()?;
+
+            folder_list.items.iter().for_each(|folder| {
+                folders.push(Folder {
+                    // XXX this is silly and I should change this to use an
+                    // iterator over the results
+                    id: folder.id.to_string(),
+                    title: folder.title.to_string(),
+                })
+            });
+            page += 1;
+            has_more = folder_list.has_more;
+        }
+
         Ok(folders)
     }
 

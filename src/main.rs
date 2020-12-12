@@ -34,12 +34,6 @@ fn main() {
     let config = dbg!(config::Config::get());
     let client = dbg!(get_mastodon_connection());
     let top = dbg!(config.last_favorite.to_string());
-    // let joplin_storage = if let Some(joplin_config) = &config.joplin {
-    //     Some(Joplin::new_from_config(&joplin_config))
-    // } else {
-    //     None
-    // };
-    // let fs_storage = Filesystem::new();
     let storage: Box<dyn Storage> = if let Some(joplin) = &config.joplin {
         Box::new(Joplin::new_from_config(&joplin))
     } else {
