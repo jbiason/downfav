@@ -73,31 +73,35 @@ impl Storage for Joplin {
 }
 
 impl Joplin {
-    pub fn new_from_config(config: &JoplinConfig) -> Joplin {
-        if let Some(folder_id) = Joplin::find_folder(config) {
-            Joplin {
+    pub(crate) fn new_from_config(config: &JoplinConfig) -> Joplin {
+        match Joplin::find_folder(config) {
+            Some(folder_id) => Joplin {
                 port: config.port,
                 token: config.token.to_string(),
-                folder_id: folder_id,
+                folder_id,
                 client: reqwest::Client::new(),
+            },
+            None => {
+                println!("The notebook {} does not exist", &config.folder);
+                panic!("The specified notebook does not exist");
             }
-        } else {
-            println!("The notebook {} does not exist", &config.folder);
-            panic!("The specified notebook does not exist");
         }
     }
 
     fn find_folder(config: &JoplinConfig) -> Option<String> {
-        if let Ok(folders) = dbg!(Joplin::get_folder_list(config)) {
-            for folder in folders {
-                if folder.title == *config.folder {
-                    return Some(folder.id);
+        match dbg!(Joplin::get_folder_list(config)) {
+            Ok(folders) => {
+                for folder in folders {
+                    if folder.title == *config.folder {
+                        return Some(folder.id);
+                    }
                 }
+                None
             }
-            None
-        } else {
-            println!("Failed to retrieve the notebook list");
-            panic!("Failed to retrieve Joplin notebook list");
+            Err(_) => {
+                println!("Failed to retrieve the notebook list");
+                panic!("Failed to retrieve Joplin notebook list");
+            }
         }
     }
 
