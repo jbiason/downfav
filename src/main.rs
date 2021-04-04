@@ -19,7 +19,6 @@
 use std::io;
 
 use elefren::helpers::cli;
-use elefren::helpers::toml as elefren_toml;
 use elefren::prelude::*;
 
 use crate::storage::data::Data;
@@ -31,14 +30,21 @@ mod config;
 mod storage;
 
 fn main() {
-    let config = dbg!(config::Config::get());
-    let client = dbg!(get_mastodon_connection());
-    let top = dbg!(config.last_favorite.to_string());
+    let config = match config::Config::get() {
+        Ok(config) => config,
+        Err(_) => {
+            let data = connect_to_mastodon();
+            config::Config::from(data)
+        }
+    };
+
+    let top = dbg!(config.favourite.last.to_string());
     let storage: Box<dyn Storage> = match &config.joplin {
         Some(joplin) => Box::new(Joplin::new_from_config(&joplin)),
         None => Box::new(Filesystem::new()),
     };
 
+    let client = Mastodon::from(config.mastodon.clone());
     let most_recent_favourite = client
         .favourites()
         .unwrap()
@@ -59,28 +65,22 @@ fn main() {
             }
         });
 
-    config.save(most_recent_favourite);
+    if let Some(new_favourite) = most_recent_favourite {
+        config.save(&new_favourite);
+    }
 }
 
-/// Get a connection with Mastodon; if there is no set up with any account yet,
-/// requests one.
-fn get_mastodon_connection() -> Mastodon {
-    match elefren_toml::from_file("mastodon.toml") {
-        Ok(data) => Mastodon::from(data),
-        Err(_) => {
-            println!("Your server URL: ");
-            let mut server = String::new();
-            io::stdin()
-                .read_line(&mut server)
-                .expect("You need to enter yoru server URL");
+/// Create a connection to a mastodon server.
+fn connect_to_mastodon() -> elefren::data::Data {
+    println!("Your server URL: ");
+    let mut server = String::new();
+    io::stdin()
+        .read_line(&mut server)
+        .expect("You need to enter yoru server URL");
 
-            let registration = Registration::new(server.trim())
-                .client_name("downfav")
-                .build()
-                .unwrap();
-            let mastodon = cli::authenticate(registration).unwrap();
-            elefren_toml::to_file(&*mastodon, "mastodon.toml").unwrap();
-            mastodon
-        }
-    }
+    let registration = Registration::new(server.trim())
+        .client_name("downfav")
+        .build()
+        .unwrap();
+    cli::authenticate(registration).unwrap().data
 }

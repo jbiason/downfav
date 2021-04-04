@@ -19,6 +19,7 @@
 use std::fs::File;
 use std::io::prelude::*;
 
+use elefren::Data;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
@@ -32,48 +33,82 @@ pub struct JoplinConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct Favourite {
+    pub last: String,
+}
+
+impl Favourite {
+    pub fn new() -> Self {
+        Self { last: "".into() }
+    }
+
+    pub fn new_with_value(new_last: &str) -> Self {
+        Self {
+            last: new_last.into(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
-    pub last_favorite: String,
+    pub favourite: Favourite,
+    pub mastodon: Data,
     pub joplin: Option<JoplinConfig>,
 }
 
-impl Config {
-    pub fn get() -> Config {
-        if let Ok(mut fp) = File::open("downfav.toml") {
-            let mut contents = String::new();
-            fp.read_to_string(&mut contents).unwrap();
+/// Errors while loading the configuration file
+#[derive(Debug)]
+pub enum ConfigError {
+    /// There is no configuration file
+    NoConfig,
+    /// The configuration file format is invalid
+    InvalidConfig,
+}
 
-            let config: Config = toml::from_str(&contents).unwrap_or(Config {
-                last_favorite: "".to_string(),
-                joplin: None,
-            });
-            config
-        } else {
-            Config {
-                last_favorite: "".to_string(),
-                joplin: None,
-            }
-        }
+impl From<toml::de::Error> for ConfigError {
+    fn from(_: toml::de::Error) -> Self {
+        // Since we only have one single error so far...
+        ConfigError::InvalidConfig
+    }
+}
+
+impl From<std::io::Error> for ConfigError {
+    fn from(_: std::io::Error) -> Self {
+        // This is not optimal: Some IO errors we can't recover (like
+        // PermissionDenied)
+        ConfigError::NoConfig
+    }
+}
+
+impl Config {
+    pub fn get() -> Result<Config, ConfigError> {
+        let mut fp = File::open("downfav.toml")?;
+        let mut contents = String::new();
+        fp.read_to_string(&mut contents).unwrap();
+
+        Ok(toml::from_str(&contents)?)
     }
 
-    pub fn save(&self, most_recent_favourite: Option<String>) -> () {
-        if let Some(id) = most_recent_favourite {
-            let new_configuration = Config {
-                last_favorite: id,
-                joplin: match &self.joplin {
-                    None => None,
-                    Some(x) => Some(JoplinConfig {
-                        folder: x.folder.to_string(),
-                        token: x.token.to_string(),
-                        port: x.port,
-                    }),
-                },
-            };
-            let content = toml::to_string(&new_configuration).unwrap();
+    pub fn save(self, most_recent_favourite: &str) -> Self {
+        let new_configuration = Self {
+            favourite: Favourite::new_with_value(most_recent_favourite),
+            ..self
+        };
+        let content = toml::to_string(&new_configuration).unwrap();
 
-            if let Ok(mut fp) = File::create("downfav.toml") {
-                fp.write_all(content.as_bytes()).unwrap();
-            }
+        if let Ok(mut fp) = File::create("downfav.toml") {
+            fp.write_all(content.as_bytes()).unwrap();
+        }
+        new_configuration
+    }
+}
+
+impl From<elefren::data::Data> for Config {
+    fn from(data: elefren::data::Data) -> Self {
+        Config {
+            favourite: Favourite::new(),
+            mastodon: data,
+            joplin: None, // at least, not yet
         }
     }
 }
