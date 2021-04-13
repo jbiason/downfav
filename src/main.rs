@@ -30,6 +30,8 @@ mod config;
 mod storage;
 
 fn main() {
+    env_logger::init();
+
     let config = match config::Config::get() {
         Ok(config) => config,
         Err(_) => {
@@ -38,7 +40,8 @@ fn main() {
         }
     };
 
-    let top = dbg!(config.favourite.last.to_string());
+    let top = config.favourite.last.to_string();
+    log::debug!("Last favourite seen: {}", top);
     let storage: Box<dyn Storage> = match &config.joplin {
         Some(joplin) => Box::new(Joplin::new_from_config(&joplin)),
         None => Box::new(Filesystem::new()),
@@ -49,9 +52,14 @@ fn main() {
         .favourites()
         .unwrap()
         .items_iter()
-        .take_while(|record| dbg!(record).id != top)
+        .take_while(|record| {
+            println!("Current ID: {} (last favourite: {})", record.id, top);
+            record.id != top
+        })
         .map(|record| {
-            let conversion = dbg!(Data::from(dbg!(&record)));
+            log::debug!("Incoming record: {:?}", record);
+            let conversion = Data::from(&record);
+            log::debug!("Converted record: {:?}", conversion);
             storage.save(&conversion);
             record
         })

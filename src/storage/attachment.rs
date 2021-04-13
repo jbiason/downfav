@@ -40,10 +40,10 @@ impl Attachment {
         let mut frags = self.url.rsplitn(2, '/');
 
         if let Some(path_part) = frags.next() {
-            dbg!(path_part.split('?').next().unwrap_or(&self.url).to_string())
+            path_part.split('?').next().unwrap_or(&self.url).to_string()
         } else {
             // this is, most of the time, bad (due special characters -- like '?' -- and path)
-            dbg!(self.url.to_string())
+            self.url.to_string()
         }
     }
 

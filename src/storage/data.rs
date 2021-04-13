@@ -36,12 +36,10 @@ pub struct Data {
 /// Convert the incoming Status from Elefren to ours.
 impl From<&Status> for Data {
     fn from(origin: &Status) -> Self {
-        println!("Downloading ID: {}", origin.id);
-
         Self {
             id: origin.id.to_string(),
             account: origin.account.acct.to_string(),
-            text: dbg!(build_text(origin)),
+            text: build_text(origin),
             attachments: origin
                 .media_attachments
                 .iter()

@@ -64,11 +64,12 @@ pub struct Joplin {
 
 impl Storage for Joplin {
     fn save(&self, record: &Data) {
-        let resources = dbg!(self.save_attachments(&record));
+        let resources = self.save_attachments(&record);
+        log::debug!("Record attachments: {:?}", resources);
         let mut text = record.text.to_string();
         let title = format!("{}/{}", record.account, record.id);
         Joplin::add_resources_to_text(&mut text, &resources);
-        dbg!(self.save_content(&title, &text, &record.source));
+        self.save_content(&title, &text, &record.source);
     }
 }
 
@@ -82,14 +83,13 @@ impl Joplin {
                 client: reqwest::Client::new(),
             },
             None => {
-                println!("The notebook {} does not exist", &config.folder);
                 panic!("The specified notebook does not exist");
             }
         }
     }
 
     fn find_folder(config: &JoplinConfig) -> Option<String> {
-        match dbg!(Joplin::get_folder_list(config)) {
+        match Joplin::get_folder_list(config) {
             Ok(folders) => {
                 for folder in folders {
                     if folder.title == *config.folder {
@@ -99,7 +99,6 @@ impl Joplin {
                 None
             }
             Err(_) => {
-                println!("Failed to retrieve the notebook list");
                 panic!("Failed to retrieve Joplin notebook list");
             }
         }
@@ -111,12 +110,12 @@ impl Joplin {
         let mut folders: Vec<Folder> = Vec::new();
 
         while has_more {
-            let base_url = dbg!(format!(
+            let base_url = format!(
                 "http://localhost:{port}/folders?token={token}&page={page}",
                 port = config.port,
                 token = config.token,
                 page = page
-            ));
+            );
             let folder_list: FolderList = reqwest::get(&base_url)?.json()?;
 
             folder_list.items.iter().for_each(|folder| {
@@ -168,8 +167,7 @@ impl Joplin {
             .map(|attachment| {
                 let mut buffer: Vec<u8> = vec![];
                 attachment.download().copy_to(&mut buffer).unwrap();
-                let resource_id =
-                    dbg!(self.upload_resource(attachment.filename().to_string(), buffer));
+                let resource_id = self.upload_resource(attachment.filename().to_string(), buffer);
 
                 Resource {
                     id: resource_id,
