@@ -1,6 +1,6 @@
 [package]
 name = "downfav"
-version = "0.3.3"
+version = "0.4.0"
 authors = ["Julio Biason <julio.biason@pm.me>"]
 edition = "2018"
 
@@ -13,3 +13,4 @@ serde_derive = "*"
 toml = "0.5"
 log = "0.4"
 env_logger = "0.8"
+chrono = "0.4"

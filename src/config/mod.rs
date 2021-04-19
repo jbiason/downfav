@@ -33,6 +33,11 @@ pub struct JoplinConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct OrgConfig {
+    pub location: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Favourite {
     pub last: String,
 }
@@ -54,6 +59,7 @@ pub struct Config {
     pub favourite: Favourite,
     pub mastodon: Data,
     pub joplin: Option<JoplinConfig>,
+    pub org: Option<OrgConfig>,
 }
 
 /// Errors while loading the configuration file
@@ -66,8 +72,9 @@ pub enum ConfigError {
 }
 
 impl From<toml::de::Error> for ConfigError {
-    fn from(_: toml::de::Error) -> Self {
+    fn from(e: toml::de::Error) -> Self {
         // Since we only have one single error so far...
+        log::debug!("Toml error: {:?}", e);
         ConfigError::InvalidConfig
     }
 }
@@ -85,7 +92,6 @@ impl Config {
         let mut fp = File::open("downfav.toml")?;
         let mut contents = String::new();
         fp.read_to_string(&mut contents).unwrap();
-
         Ok(toml::from_str(&contents)?)
     }
 
@@ -108,7 +114,8 @@ impl From<elefren::data::Data> for Config {
         Config {
             favourite: Favourite::new(),
             mastodon: data,
-            joplin: None, // at least, not yet
+            joplin: None,
+            org: None,
         }
     }
 }

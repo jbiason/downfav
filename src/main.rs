@@ -24,6 +24,7 @@ use elefren::prelude::*;
 use crate::storage::data::Data;
 use crate::storage::filesystem::Filesystem;
 use crate::storage::joplin::Joplin;
+use crate::storage::org::Org;
 use crate::storage::storage::Storage;
 
 mod config;
@@ -34,7 +35,8 @@ fn main() {
 
     let config = match config::Config::get() {
         Ok(config) => config,
-        Err(_) => {
+        Err(e) => {
+            log::debug!("Configuration error: {:?}", e);
             let data = connect_to_mastodon();
             config::Config::from(data)
         }
@@ -42,9 +44,10 @@ fn main() {
 
     let top = config.favourite.last.to_string();
     log::debug!("Last favourite seen: {}", top);
-    let storage: Box<dyn Storage> = match &config.joplin {
-        Some(joplin) => Box::new(Joplin::new_from_config(&joplin)),
-        None => Box::new(Filesystem::new()),
+    let storage: Box<dyn Storage> = match (&config.joplin, &config.org) {
+        (Some(joplin), _) => Box::new(Joplin::new_from_config(&joplin)),
+        (None, Some(org)) => Box::new(Org::new_from_config(&org)),
+        (None, None) => Box::new(Filesystem::new()),
     };
 
     let client = Mastodon::from(config.mastodon.clone());

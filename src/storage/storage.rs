@@ -20,6 +20,12 @@ use crate::storage::data::Data;
 
 /// Trait for storing favorites on a storage.
 pub trait Storage {
+    /// Storage initialization
+    fn init(&self) {}
+
     /// Save the favourite in the storage.
     fn save(&self, record: &Data);
+
+    /// Storage finalization
+    fn close(&self) {}
 }

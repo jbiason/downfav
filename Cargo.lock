@@ -303,8 +303,9 @@ checksum = "923dea538cea0aa3025e8685b20d6ee21ef99c4f77e954a30febbaac5ec73a97"
 
 [[package]]
 name = "downfav"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
+ "chrono",
  "elefren",
  "env_logger",
  "html2md",
