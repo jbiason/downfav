@@ -52,7 +52,7 @@ impl Storage for Org {
             .write(true)
             .append(true)
             .open(&self.file)
-            .map_err(|_| {
+            .unwrap_or_else(|_| {
                 // Let's assume here that the problem is that the file doesn't exist.
                 log::debug!(
                     "Creating {filename}",
@@ -68,8 +68,8 @@ impl Storage for Org {
                         fp.write_all(text.as_bytes()).unwrap();
                         fp
                     })
-            })
-            .unwrap();
+                    .unwrap()
+            });
         fp.write_all(
             format!(
                 "* {user}/{id}\n  {message}\n",
