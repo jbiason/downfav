@@ -19,7 +19,6 @@
 use std::convert::From;
 
 use elefren::entities::status::Status;
-use html2md;
 
 use crate::storage::attachment::Attachment;
 
@@ -28,6 +27,7 @@ use crate::storage::attachment::Attachment;
 pub struct Data {
     pub id: String,
     pub account: String,
+    pub title: String,
     pub text: String,
     pub attachments: Vec<Attachment>,
     pub source: String,
@@ -39,7 +39,8 @@ impl From<&Status> for Data {
         Self {
             id: origin.id.to_string(),
             account: origin.account.acct.to_string(),
-            text: build_text(origin),
+            title: origin.spoiler_text.to_string(),
+            text: origin.content.to_string(),
             attachments: origin
                 .media_attachments
                 .iter()
@@ -48,25 +49,4 @@ impl From<&Status> for Data {
             source: origin.url.as_ref().unwrap_or(&String::new()).to_string(),
         }
     }
-}
-
-fn build_text(status: &Status) -> String {
-    let base_content = html2md::parse_html(&status.content);
-    let source = &status.url;
-    let title = &status.spoiler_text;
-
-    let mut result = String::new();
-    if title.len() > 0 {
-        result.push_str(title);
-        result.push_str("\n\n");
-    }
-
-    result.push_str(&base_content);
-
-    if let Some(url) = source {
-        result.push_str("\n\n");
-        result.push_str(&url);
-    }
-
-    result
 }

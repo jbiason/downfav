@@ -22,6 +22,7 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use crate::storage::data::Data;
+use crate::storage::helpers::make_markdown;
 use crate::storage::storage::Storage;
 
 pub struct Filesystem {}
@@ -53,7 +54,7 @@ impl Filesystem {
     fn save_content(&self, data: &Data) {
         let filename = self.dir(data).join("toot.md");
         let mut fp = File::create(filename).expect("Failed to create file");
-        fp.write_all(data.text.as_bytes())
+        fp.write_all(make_markdown(data).as_bytes())
             .expect("Failed to save content");
     }
 

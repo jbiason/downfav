@@ -1,6 +1,6 @@
 /*
    DOWNFAV - Download Favourites
-   Copyright (C) 2020  Julio Biason
+   Copyright (C) 2020-2021  Julio Biason
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,25 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+use crate::storage::data::Data;
+use html2md;
 
-pub mod attachment;
-pub mod data;
-pub mod filesystem;
-pub mod helpers;
-pub mod joplin;
-pub mod org;
-pub mod storage;
+pub fn make_markdown(status: &Data) -> String {
+    let base_content = html2md::parse_html(&status.text);
+    let title = &status.title;
+
+    let mut result = String::new();
+    if title.len() > 0 {
+        result.push_str(title);
+        result.push_str("\n\n");
+    }
+
+    result.push_str(&base_content);
+
+    if !status.source.is_empty() {
+        result.push_str("\n\n");
+        result.push_str(&status.source);
+    }
+
+    result
+}

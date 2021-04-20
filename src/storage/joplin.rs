@@ -26,6 +26,7 @@ use serde_derive::Deserialize;
 
 use crate::config::JoplinConfig;
 use crate::storage::data::Data;
+use crate::storage::helpers::make_markdown;
 use crate::storage::storage::Storage;
 
 static INLINABLE: [&'static str; 4] = ["jpeg", "jpg", "png", "gif"];
@@ -66,7 +67,7 @@ impl Storage for Joplin {
     fn save(&self, record: &Data) {
         let resources = self.save_attachments(&record);
         log::debug!("Record attachments: {:?}", resources);
-        let mut text = record.text.to_string();
+        let mut text = make_markdown(record);
         let title = format!("{}/{}", record.account, record.id);
         Joplin::add_resources_to_text(&mut text, &resources);
         self.save_content(&title, &text, &record.source);
