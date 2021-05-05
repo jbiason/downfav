@@ -18,6 +18,7 @@
 
 use std::borrow::Borrow;
 use std::default::Default;
+use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::path::Path;
@@ -37,7 +38,9 @@ use crate::storage::storage::Storage;
 /// Definition for the Org storage
 pub struct Org {
     /// The path where the file will be stored
-    file: PathBuf,
+    path: PathBuf,
+    /// The filename for the org file
+    filename: String,
     /// The date being processed, needed for the header if it is a new file
     date: String,
 }
@@ -130,7 +133,8 @@ impl Org {
         log::debug!("Org file: {}", full_path.to_string_lossy());
 
         Org {
-            file: full_path,
+            path: Path::new(&config.location).to_path_buf(),
+            filename: filename,
             date,
         }
     }
@@ -149,26 +153,27 @@ impl Org {
         let mut result = String::new();
         result.push_str("  "); // initial identantion
         walk(&dom.document, &mut result);
-        result
+        result.trim().into()
     }
 }
 
 impl Storage for Org {
     fn save(&self, record: &Data) {
+        let org_file = self.path.join(&self.filename);
         let mut fp = OpenOptions::new()
             .write(true)
             .append(true)
-            .open(&self.file)
+            .open(&org_file)
             .unwrap_or_else(|_| {
                 // Let's assume here that the problem is that the file doesn't exist.
                 log::debug!(
                     "Creating {filename}",
-                    filename = &self.file.to_string_lossy()
+                    filename = &org_file.to_string_lossy()
                 );
                 OpenOptions::new()
                     .write(true)
                     .create(true)
-                    .open(&self.file)
+                    .open(&org_file)
                     .map(|mut fp| {
                         let text =
                             format!("#+title: Favourites from {date}\n\n", date = &self.date);
@@ -180,6 +185,26 @@ impl Storage for Org {
         fp.write_all(Org::title(record).as_bytes()).unwrap();
         fp.write_all("\n".as_bytes()).unwrap();
         fp.write_all(Org::body(record).as_bytes()).unwrap();
-        fp.write_all("\n".as_bytes()).unwrap();
+        fp.write_all("\n\n".as_bytes()).unwrap();
+
+        if !record.attachments.is_empty() {
+            fp.write_all("  Attachments:\n".as_bytes()).unwrap();
+            for attachment in record.attachments.iter() {
+                let filename = attachment.filename().to_string();
+                let in_storage = self.path.join(&record.id).join(&filename);
+                let mut target = File::create(&in_storage).unwrap();
+                log::debug!(
+                    "Downloading attachment {} as {}",
+                    filename,
+                    in_storage.to_string_lossy()
+                );
+                attachment.download().copy_to(&mut target).unwrap();
+
+                let attachment_info =
+                    format!("  - [[{}][{}]\n", in_storage.to_string_lossy(), filename);
+                fp.write_all(attachment_info.as_bytes()).unwrap();
+            }
+            fp.write_all("\n\n".as_bytes()).unwrap()
+        }
     }
 }
