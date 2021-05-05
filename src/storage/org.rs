@@ -191,7 +191,9 @@ impl Storage for Org {
             fp.write_all("  Attachments:\n".as_bytes()).unwrap();
             for attachment in record.attachments.iter() {
                 let filename = attachment.filename().to_string();
-                let in_storage = self.path.join(&record.id).join(&filename);
+                let storage_name = format!("{}-{}", &record.id, &filename);
+                let in_storage = self.path.join(&storage_name);
+                log::debug!("Saving attachment in {}", in_storage.to_string_lossy());
                 let mut target = File::create(&in_storage).unwrap();
                 log::debug!(
                     "Downloading attachment {} as {}",
