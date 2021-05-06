@@ -139,28 +139,11 @@ impl Org {
         }
     }
 
-    /// Creates the title (entry) for the record
-    fn title(record: &Data) -> String {
-        return format!("* {user}/{id}", user = record.account, id = record.id);
-    }
-
-    /// Creates the body of the markdown content from the incoming data
-    fn body(record: &Data) -> String {
-        let dom = parse_document(RcDom::default(), Default::default())
-            .from_utf8()
-            .read_from(&mut record.text.as_bytes())
-            .unwrap();
-        let mut result = String::new();
-        result.push_str("  "); // initial identantion
-        walk(&dom.document, &mut result);
-        result.trim().into()
-    }
-}
-
-impl Storage for Org {
-    fn save(&self, record: &Data) {
+    /// Open the destination Org file; if it doesn't exist, create it and
+    /// append the header.
+    fn open_file(&self) -> File {
         let org_file = self.path.join(&self.filename);
-        let mut fp = OpenOptions::new()
+        OpenOptions::new()
             .write(true)
             .append(true)
             .open(&org_file)
@@ -181,12 +164,41 @@ impl Storage for Org {
                         fp
                     })
                     .unwrap()
-            });
-        fp.write_all(Org::title(record).as_bytes()).unwrap();
-        fp.write_all("\n".as_bytes()).unwrap();
-        fp.write_all(Org::body(record).as_bytes()).unwrap();
-        fp.write_all("\n\n".as_bytes()).unwrap();
+            })
+    }
 
+    /// Create the Org header that starts this element
+    fn org_title(&self, fp: &mut File, record: &Data) {
+        let title = format!("* {user}/{id}", user = record.account, id = record.id);
+        fp.write_all(title.as_bytes()).unwrap();
+        fp.write_all("\n".as_bytes()).unwrap();
+    }
+
+    /// Adds the title (content warning) of the content
+    fn title(&self, fp: &mut File, record: &Data) {
+        if !record.title.is_empty() {
+            let warning = format!("  ({})", &record.title);
+            fp.write_all(warning.as_bytes()).unwrap();
+            Org::prologue(fp);
+        }
+    }
+
+    /// Adds the main text content
+    fn text(&self, fp: &mut File, record: &Data) {
+        let dom = parse_document(RcDom::default(), Default::default())
+            .from_utf8()
+            .read_from(&mut record.text.as_bytes())
+            .unwrap();
+        let mut result = String::new();
+        result.push_str("  "); // initial identantion
+        walk(&dom.document, &mut result);
+        fp.write_all("  ".as_bytes()).unwrap(); // initial indentantion
+        fp.write_all(result.trim().as_bytes()).unwrap();
+        Org::prologue(fp);
+    }
+
+    /// Adds information about the attachments
+    fn attachments(&self, fp: &mut File, record: &Data) {
         if !record.attachments.is_empty() {
             fp.write_all("  Attachments:\n".as_bytes()).unwrap();
             for attachment in record.attachments.iter() {
@@ -206,7 +218,22 @@ impl Storage for Org {
                     format!("  - [[{}][{}]\n", in_storage.to_string_lossy(), filename);
                 fp.write_all(attachment_info.as_bytes()).unwrap();
             }
-            fp.write_all("\n\n".as_bytes()).unwrap()
+            Org::prologue(fp);
         }
+    }
+
+    /// Prologue: The end of the content
+    fn prologue(fp: &mut File) {
+        fp.write_all("\n\n".as_bytes()).unwrap();
+    }
+}
+
+impl Storage for Org {
+    fn save(&self, record: &Data) {
+        let mut fp = self.open_file();
+        self.org_title(&mut fp, record);
+        self.title(&mut fp, record);
+        self.text(&mut fp, record);
+        self.attachments(&mut fp, record);
     }
 }
