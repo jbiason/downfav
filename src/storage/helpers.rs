@@ -16,7 +16,6 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 use crate::storage::data::Data;
-use html2md;
 
 pub fn make_markdown(status: &Data) -> String {
     let base_content = html2md::parse_html(&status.text);

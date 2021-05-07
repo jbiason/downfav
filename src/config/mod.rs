@@ -23,8 +23,6 @@ use elefren::Data;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
-use toml;
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JoplinConfig {
     pub port: u32,
