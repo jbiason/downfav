@@ -45,6 +45,13 @@ pub struct Org {
     date: String,
 }
 
+/// Data used to dump the content into disk
+struct Dump<'a> {
+    fp: File,
+    record: &'a Data,
+    path: PathBuf,
+}
+
 /// Simple macro to recursively walk through html5ever nodes
 macro_rules! keep_going {
     ($source:ident, $target:ident) => {
@@ -139,11 +146,12 @@ impl Org {
         }
     }
 
-    /// Open the destination Org file; if it doesn't exist, create it and
-    /// append the header.
-    fn open_file(&self) -> File {
+    /// Adds information about the attachments
+    fn attachments(&self, fp: &mut File, record: &Data) {}
+
+    fn start_org<'a>(&self, record: &'a Data) -> Dump<'a> {
         let org_file = self.path.join(&self.filename);
-        OpenOptions::new()
+        let fp = OpenOptions::new()
             .write(true)
             .append(true)
             .open(&org_file)
@@ -164,46 +172,61 @@ impl Org {
                         fp
                     })
                     .unwrap()
-            })
-    }
+            });
 
-    /// Create the Org header that starts this element
-    fn org_title(&self, fp: &mut File, record: &Data) {
-        let title = format!("* {user}/{id}", user = record.account, id = record.id);
-        fp.write_all(title.as_bytes()).unwrap();
-        fp.write_all("\n".as_bytes()).unwrap();
-    }
-
-    /// Adds the title (content warning) of the content
-    fn title(&self, fp: &mut File, record: &Data) {
-        if !record.title.is_empty() {
-            let warning = format!("  ({})", &record.title);
-            fp.write_all(warning.as_bytes()).unwrap();
-            Org::prologue(fp);
+        Dump {
+            fp,
+            record,
+            path: self.path,
         }
     }
+}
 
-    /// Adds the main text content
-    fn text(&self, fp: &mut File, record: &Data) {
+impl Dump<'_> {
+    /// The initial header for the content
+    fn intro(mut self) -> Self {
+        let title = format!(
+            "* {user}/{id}",
+            user = &self.record.account,
+            id = &self.record.id
+        );
+        self.fp.write_all(title.as_bytes()).unwrap();
+        self.fp.write_all("\n".as_bytes()).unwrap();
+        self
+    }
+
+    /// If the content has a title (content warning), add it
+    fn title(mut self) -> Self {
+        if !self.record.title.is_empty() {
+            let warning = format!("  ({})", &self.record.title);
+            self.fp.write_all(warning.as_bytes()).unwrap();
+            Dump::prologue(&mut self.fp);
+        }
+        self
+    }
+
+    /// The main body of the content
+    fn text(mut self) -> Self {
         let dom = parse_document(RcDom::default(), Default::default())
             .from_utf8()
-            .read_from(&mut record.text.as_bytes())
+            .read_from(&mut self.record.text.as_bytes())
             .unwrap();
         let mut result = String::new();
         result.push_str("  "); // initial identantion
         walk(&dom.document, &mut result);
-        fp.write_all("  ".as_bytes()).unwrap(); // initial indentantion
-        fp.write_all(result.trim().as_bytes()).unwrap();
-        Org::prologue(fp);
+        self.fp.write_all("  ".as_bytes()).unwrap(); // initial indentantion
+        self.fp.write_all(result.trim().as_bytes()).unwrap();
+        Dump::prologue(&mut self.fp);
+        self
     }
 
-    /// Adds information about the attachments
-    fn attachments(&self, fp: &mut File, record: &Data) {
-        if !record.attachments.is_empty() {
-            fp.write_all("  Attachments:\n".as_bytes()).unwrap();
-            for attachment in record.attachments.iter() {
+    /// Add the final attachments
+    fn attachments(mut self) -> Self {
+        if !self.record.attachments.is_empty() {
+            self.fp.write_all("  Attachments:\n".as_bytes()).unwrap();
+            for attachment in self.record.attachments.iter() {
                 let filename = attachment.filename().to_string();
-                let storage_name = format!("{}-{}", &record.id, &filename);
+                let storage_name = format!("{}-{}", &self.record.id, &filename);
                 let in_storage = self.path.join(&storage_name);
                 log::debug!("Saving attachment in {}", in_storage.to_string_lossy());
                 let mut target = File::create(&in_storage).unwrap();
@@ -216,24 +239,31 @@ impl Org {
 
                 let attachment_info =
                     format!("  - [[{}][{}]\n", in_storage.to_string_lossy(), filename);
-                fp.write_all(attachment_info.as_bytes()).unwrap();
+                self.fp.write_all(attachment_info.as_bytes()).unwrap();
             }
-            Org::prologue(fp);
+            Dump::prologue(&mut self.fp);
         }
+        self
     }
 
     /// Prologue: The end of the content
     fn prologue(fp: &mut File) {
         fp.write_all("\n\n".as_bytes()).unwrap();
     }
+
+    /// Done: Complete the data
+    fn done(self) {
+        // because we have all the prologues, we don't need to do anything else.
+    }
 }
 
 impl Storage for Org {
     fn save(&self, record: &Data) {
-        let mut fp = self.open_file();
-        self.org_title(&mut fp, record);
-        self.title(&mut fp, record);
-        self.text(&mut fp, record);
-        self.attachments(&mut fp, record);
+        self.start_org(record)
+            .intro()
+            .title()
+            .text()
+            .attachments()
+            .done();
     }
 }
