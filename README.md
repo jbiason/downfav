@@ -75,6 +75,19 @@ And, to use the Filesystem storage, you should have no other configuration.
 
 GNU AFFERO GENERAL PUBLIC LICENSE, Version 3.
 
+## Ideas
+
+- [ ] Use [clap](https://crates.io/crates/clap) for a full command line
+  experience
+- [ ] Use a single configuration file, instead of one per account.
+- [ ] Manage multiple accounts (as in `downfav account add ` and maybe account
+  and server?)
+- [ ] Manage multiple storages for accounts (as in `downfav storage add
+  <account> <storage type>`; if there are any options, they could follow the
+  storage type and/or ask the user.)
+- [ ] Async?
+- [ ] Proper word-wrapping for Markdown and Org Modes.
+
 ---
 
 [^1]: Why in the current directory? If you're using the filesystem storage,
