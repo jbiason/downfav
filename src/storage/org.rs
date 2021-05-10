@@ -80,7 +80,7 @@ fn walk(input: &Handle, result: &mut String) {
                 "html" | "head" | "body" => keep_going!(input, result),
                 "p" | "br" => {
                     keep_going!(input, result);
-                    result.push_str("\n  ");
+                    result.push_str("\n\n  ");
                 }
                 "span" => {
                     let attrs = attrs.borrow();
@@ -146,9 +146,7 @@ impl Org {
         }
     }
 
-    /// Adds information about the attachments
-    fn attachments(&self, fp: &mut File, record: &Data) {}
-
+    /// Do the initialization of saving the data in Org format.
     fn start_org<'a>(&self, record: &'a Data) -> Dump<'a> {
         let org_file = self.path.join(&self.filename);
         let fp = OpenOptions::new()
@@ -177,7 +175,7 @@ impl Org {
         Dump {
             fp,
             record,
-            path: self.path,
+            path: self.path.to_path_buf(),
         }
     }
 }
@@ -237,8 +235,11 @@ impl Dump<'_> {
                 );
                 attachment.download().copy_to(&mut target).unwrap();
 
-                let attachment_info =
-                    format!("  - [[{}][{}]\n", in_storage.to_string_lossy(), filename);
+                let attachment_info = format!(
+                    "  - [[file:{}][{}]\n",
+                    in_storage.to_string_lossy(),
+                    filename
+                );
                 self.fp.write_all(attachment_info.as_bytes()).unwrap();
             }
             Dump::prologue(&mut self.fp);
