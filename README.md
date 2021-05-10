@@ -11,17 +11,24 @@ marked as Favourite to the disk.
 
 ## Configuration
 
-There are two configuration files:
+There is one single configuration file, `downfav.toml` which is read in the
+current directory[^1].
 
-* `mastodon.toml` contains the secret to access your server. 
-* `downfav.toml` have the information used by downfav itself.
+The general format of this file is:
 
-## `downfav.toml`
+```toml
+[favourite]
+last = "<id>"
 
-This file has the following format:
+[mastodon]
+base = "<server>"
+client_id = "<id>"
+client_secret = "<secret>"
+redirect = "<oauth id>"
+token = "<access token>"
 
-```
-last_favorite = "<id>"
+[org]
+location = "<some path>"
 
 [joplin]
 port = <port>
@@ -29,16 +36,50 @@ token = "<token>"
 folder = "<folder>"
 ```
 
-The first value, `last_favorite` is used by Downfav itself; as soon as it
-completes a run, it will update this value (and create this configuration
-file, if it doesn't exist) with the top favourite download. This is done to
-prevent download favourites over and over again.
+When you run `downfav`, it will ask for your server an ask to connect to your
+account. After that, the first two sections will be added.
 
-The next section, `[joplin]` must be added manually, if you want to save your
-favorites into Joplin. The first two fields are the same used by the web
-clipper, and you can check those two directly in the configuration panel. The
-last one is the name of the notebook in which you want to keep the toots.
+By default, `downfav` stores favourites as Markdown files in a directory called
+`data` along the configuration file; this is called the Filesystem storage.
+Besides this storage, `downfav` have two more storages:
+
+### Joplin Storage
+
+[Joplin](https://joplinapp.org/) is an open source note taking application.
+To use Joplin as a storage for `downfav`, you need to enable the web clipper.
+On the same page, you'll find the port (usually is 41184) and the token. Along
+with that, you need to define a Folder where all the favourites will be stored,
+using its name.
+
+Once you have this information, you can add the `[joplin]` section and the rest
+of the information.
+
+### Org Storage
+
+[Org-Mode](https://orgmode.org/) is a format/plugin for Emacs that can keep
+notes, agenda, TODOs and a bunch more.
+
+To enable Org mode, you need to add the `[org]` section and define the path
+where the notes will be kept. `downfav` will create one note per day, adding
+any new favourites in that note.
+
+### Resolution order
+
+But what happens if I have Joplin and Org set up in my config file? Well, by
+default, `downfav` will pick Joplin and ignore Org. If you want to save on Org
+format, you must not have the Joplin section in your config.
+
+And, to use the Filesystem storage, you should have no other configuration.
 
 ## License
 
 GNU AFFERO GENERAL PUBLIC LICENSE, Version 3.
+
+---
+
+[^1]: Why in the current directory? If you're using the filesystem storage,
+  keeping all favourites in a single directory, we need to access the `data`
+  directory to store things there. By forcing having in the current directory,
+  we can be somewhat sure it won't keep adding `data` to whatever. Also, it
+  helps if you have multiple accounts. *On a related note, maybe we could add
+  multiple accounts and fixed directory in the config file itself.*
