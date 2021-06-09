@@ -36,18 +36,27 @@ fn main() {
 
     match args::parse() {
         args::Command::Fetch => fetch_favourites(),
+        args::Command::AddAccount(account_name) => add_account(&account_name),
         _ => println!("Unknown command"),
     }
 }
 
+/// Create a new account
+fn add_account(name: &str) {
+    log::debug!("Creating account {}", name);
+    println!("Enter information for account \"{}\":", name);
+    let data = connect_to_mastodon();
+    config::Config::add_account(name, data)
+}
+
 /// Retrieve favourites
 fn fetch_favourites() {
-    let config = match config::Config::get() {
+    let config = match config::AccountConfig::get() {
         Ok(config) => config,
         Err(e) => {
             log::debug!("Configuration error: {:?}", e);
             let data = connect_to_mastodon();
-            config::Config::from(data)
+            config::AccountConfig::from(data)
         }
     };
 

@@ -16,6 +16,7 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -54,6 +55,21 @@ impl Favourite {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
+    accounts: HashMap<String, AccountConfig>,
+}
+
+impl Config {
+    pub fn add_account(name: &str, configuration: elefren::data::Data) {
+        let config = AccountConfig::from(configuration);
+        let mut accounts: HashMap<String, AccountConfig> = HashMap::new();
+        accounts.insert(name.into(), config);
+        let content = toml::to_string(&accounts).unwrap();
+        log::debug!("{}", content);
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AccountConfig {
     pub favourite: Favourite,
     pub mastodon: Data,
     pub joplin: Option<JoplinConfig>,
@@ -85,8 +101,8 @@ impl From<std::io::Error> for ConfigError {
     }
 }
 
-impl Config {
-    pub fn get() -> Result<Config, ConfigError> {
+impl AccountConfig {
+    pub fn get() -> Result<AccountConfig, ConfigError> {
         let mut fp = File::open("downfav.toml")?;
         let mut contents = String::new();
         fp.read_to_string(&mut contents).unwrap();
@@ -105,11 +121,14 @@ impl Config {
         }
         new_configuration
     }
+
+    /// Add an account to the configuration
+    pub fn add_account() {}
 }
 
-impl From<elefren::data::Data> for Config {
+impl From<elefren::data::Data> for AccountConfig {
     fn from(data: elefren::data::Data) -> Self {
-        Config {
+        Self {
             favourite: Favourite::new(),
             mastodon: data,
             joplin: None,
