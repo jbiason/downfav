@@ -78,15 +78,27 @@ GNU AFFERO GENERAL PUBLIC LICENSE, Version 3.
 ## Ideas
 
 - [ ] Use [clap](https://crates.io/crates/clap) for a full command line
-  experience
-- [ ] Use a single configuration file, instead of one per account.
+  experience.
 - [ ] Manage multiple accounts (as in `downfav account add ` and maybe account
-  and server?)
+  and server?); use a single configuration file.
+- [ ] Store the configuration file in a fixed path instead of the current
+  directory.
+- [ ] Add configuration for the 
 - [ ] Manage multiple storages for accounts (as in `downfav storage add
   <account> <storage type>`; if there are any options, they could follow the
   storage type and/or ask the user.)
+- [ ] Move the Storage trait to the main Storage module.
+- [ ] Better error handling in the main loop (currently, if there is an issue,
+  the "last seen toot" will be still updated); the Storage trait must return
+  `Result`s; remove the functional/fluent loop in the main application and use
+  a `for`.
+- [ ] Since things can fail, all Storages must take this in account (filesystem
+  will just override things, so it is no real issue; Joplin must check if the
+  note already exists; Org must save the note in a temporary file and just move
+  it in the end).
 - [ ] Async?
-- [ ] Proper word-wrapping for Markdown and Org Modes.
+- [ ] Proper word-wrapping for Markdown and Org Modes (links is pretty hard to
+  wrap correctly, due the combination of title and link).
 
 ---
 
