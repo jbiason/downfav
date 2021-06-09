@@ -27,12 +27,21 @@ use crate::storage::joplin::Joplin;
 use crate::storage::org::Org;
 use crate::storage::storage::Storage;
 
+mod args;
 mod config;
 mod storage;
 
 fn main() {
     env_logger::init();
 
+    match args::parse() {
+        args::Command::Fetch => fetch_favourites(),
+        _ => println!("Unknown command"),
+    }
+}
+
+/// Retrieve favourites
+fn fetch_favourites() {
     let config = match config::Config::get() {
         Ok(config) => config,
         Err(e) => {
@@ -80,7 +89,6 @@ fn main() {
         config.save(&new_favourite);
     }
 }
-
 /// Create a connection to a mastodon server.
 fn connect_to_mastodon() -> elefren::data::Data {
     println!("Your server URL: ");

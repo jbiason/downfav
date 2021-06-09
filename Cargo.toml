@@ -1,19 +1,21 @@
 [package]
 name = "downfav"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Julio Biason <julio.biason@pm.me>"]
 edition = "2018"
+description = "Download Mastodon favourites"
 
 [dependencies]
+chrono = "0.4"
+clap = "2.33"
 elefren = { version = "0.20", features = ["toml"] }
+env_logger = "0.8"
 html2md = "0.2"
+html5ever = "0.25"
+log = "0.4"
+markup5ever = "0.10"
+markup5ever_rcdom = "0.1"
 reqwest = "0.9"
 serde = "*"
 serde_derive = "*"
 toml = "0.5"
-log = "0.4"
-env_logger = "0.8"
-chrono = "0.4"
-html5ever = "0.25"
-markup5ever_rcdom = "0.1"
-markup5ever = "0.10"
