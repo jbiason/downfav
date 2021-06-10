@@ -121,9 +121,6 @@ impl AccountConfig {
         }
         new_configuration
     }
-
-    /// Add an account to the configuration
-    pub fn add_account() {}
 }
 
 impl From<elefren::data::Data> for AccountConfig {
