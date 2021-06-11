@@ -8,6 +8,7 @@ description = "Download Mastodon favourites"
 [dependencies]
 chrono = "0.4"
 clap = "2.33"
+directories = "3.0"
 elefren = { version = "0.20", features = ["toml"] }
 env_logger = "0.8"
 html2md = "0.2"

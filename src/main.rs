@@ -43,10 +43,10 @@ fn main() {
 
 /// Create a new account
 fn add_account(name: &str) {
-    log::debug!("Creating account {}", name);
-    println!("Enter information for account \"{}\":", name);
-    let data = connect_to_mastodon();
-    config::Config::add_account(name, data)
+    let mut config = config::config::Config::open().unwrap();
+    let connection_info = connect_to_mastodon();
+    config.add_account(name, connection_info);
+    config.save();
 }
 
 /// Retrieve favourites

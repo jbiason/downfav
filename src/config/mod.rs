@@ -24,6 +24,8 @@ use elefren::Data;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
+pub mod config;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JoplinConfig {
     pub port: u32,
