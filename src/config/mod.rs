@@ -25,6 +25,7 @@ use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
 pub mod config;
+pub mod errors;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JoplinConfig {

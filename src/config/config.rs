@@ -26,6 +26,8 @@ use elefren::Data;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
+use crate::config::errors::ConfigError;
+
 /// The last seen favourite
 #[derive(Serialize, Deserialize, Debug)]
 struct Favourite {
@@ -78,35 +80,12 @@ impl Config {
     }
 
     /// Save the current configuration file.
-    // TODO Result for save result?
-    pub fn save(&self) {
-        let content = toml::to_string(&self.0).unwrap();
-        let filename = Config::filename().unwrap();
+    pub fn save(&self) -> Result<(), ConfigError> {
+        let content = toml::to_string(&self.0)?;
+        let filename = Config::filename()?;
         log::debug!("Saving configuration to file \"{:?}\"", filename);
-        let mut fp = File::create(filename).unwrap();
-        fp.write_all(content.as_bytes()).unwrap();
-    }
-}
-
-/// Errors from the configuration
-#[derive(Debug)]
-pub enum ConfigError {
-    /// The system can't figure out the path for the configuration file
-    CantFigureConfigPath,
-    /// The configuration file has an error and can't be parsed
-    ConfigFileIsBroken,
-}
-
-impl From<toml::de::Error> for ConfigError {
-    fn from(e: toml::de::Error) -> Self {
-        log::debug!("Toml error: {:?}", e);
-        ConfigError::ConfigFileIsBroken
-    }
-}
-
-impl From<std::io::Error> for ConfigError {
-    fn from(e: std::io::Error) -> Self {
-        log::debug!("I/O error: {:?}", e);
-        ConfigError::ConfigFileIsBroken
+        let mut fp = File::create(filename)?;
+        fp.write_all(content.as_bytes())?;
+        Ok(())
     }
 }
