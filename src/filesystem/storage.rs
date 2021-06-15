@@ -47,7 +47,8 @@ impl Filesystem {
 
     /// Make sure the path structure exists for saving the data.
     fn create_dirs(&self, data: &Data) {
-        std::fs::create_dir_all(self.dir(data)).expect("Failed to create storage directory");
+        std::fs::create_dir_all(self.dir(data))
+            .expect("Failed to create storage directory");
     }
 
     /// Save the content in the directory.

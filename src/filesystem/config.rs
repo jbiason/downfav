@@ -16,9 +16,12 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pub mod attachment;
-pub mod data;
-pub mod helpers;
-pub mod joplin;
-pub mod org;
-pub mod storage;
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
+
+/// Configuration for the Filesystem backend
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FilesystemConfig {
+    /// Path where files will be stored.
+    pub path: String,
+}

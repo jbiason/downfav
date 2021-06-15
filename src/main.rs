@@ -21,14 +21,15 @@ use std::io;
 use elefren::helpers::cli;
 use elefren::prelude::*;
 
+use crate::filesystem::storage::Filesystem;
 use crate::storage::data::Data;
-use crate::storage::filesystem::Filesystem;
 use crate::storage::joplin::Joplin;
 use crate::storage::org::Org;
 use crate::storage::storage::Storage;
 
 mod args;
 mod config;
+mod filesystem;
 mod storage;
 
 fn main() {
@@ -46,7 +47,7 @@ fn add_account(name: &str) {
     let mut config = config::config::Config::open().unwrap();
     let connection_info = connect_to_mastodon();
     config.add_account(name, connection_info);
-    config.save();
+    config.save().unwrap();
 }
 
 /// Retrieve favourites

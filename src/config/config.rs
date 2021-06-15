@@ -27,6 +27,7 @@ use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
 use crate::config::errors::ConfigError;
+use crate::filesystem::config::FilesystemConfig;
 
 /// The last seen favourite
 #[derive(Serialize, Deserialize, Debug)]
@@ -39,6 +40,9 @@ struct Favourite {
 struct AccountConfig {
     favourite: Option<Favourite>,
     mastodon: Data,
+    filesystem: Option<FilesystemConfig>,
+    // joplin: Option<JoplinConfig>,
+    // org: Option<OrgConfig>,
 }
 
 /// The main configuration
@@ -75,6 +79,7 @@ impl Config {
         let account_data = AccountConfig {
             favourite: None,
             mastodon: configuration,
+            filesystem: None,
         };
         self.0.insert(name.into(), account_data);
     }
