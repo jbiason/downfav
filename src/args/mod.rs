@@ -65,7 +65,25 @@ pub fn parse() -> Command {
                                 .help("Name of the account to be removed"),
                         ),
                 ),
-        );
+        )
+        .subcommand(
+            SubCommand::with_name("storage")
+                .about("Storage management")
+                .arg(
+                    Arg::with_name("account")
+                        .required(true)
+                        .takes_value(true)
+                        .help("Account name"),
+                )
+                .subcommand(
+                    SubCommand::with_name("add")
+                        .about("Add a storage for an account")
+                        .subcommand(SubCommand::with_name("filesystem")
+                            .about("Stores toots in the filesystem")
+                            .arg(Arg::with_name("path")
+                                .required(true)
+                                .takes_value(true)
+                                .help("Path where store toots in the filesystem")))));
     let matches = parser.get_matches();
     match matches.subcommand() {
         ("", _) => Command::Fetch,
