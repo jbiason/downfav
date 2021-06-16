@@ -18,17 +18,18 @@
 
 use clap::App;
 use clap::Arg;
-use clap::ArgMatches;
 use clap::SubCommand;
 
 /// Possible commands
 pub enum Command {
     /// Got a command that we don't know
     Unknown,
-    /// Fetch all new favourites
-    Fetch,
+    /// Fetch favourites from all accounts
+    FetchAll,
+    /// Fetch favourites from a specific account
+    Fetch(String),
     /// Add a new account with the specified name
-    AddAccount(String),
+    CreateAccount(String),
     /// Remove the account with the specified name
     RemoveAccount(String),
 }
@@ -39,73 +40,42 @@ pub fn parse() -> Command {
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
         .about(clap::crate_description!())
+        .arg(Arg::with_name("account").help("Account alias"))
         .subcommand(
-            SubCommand::with_name("fetch").about("Fetch the new favourites"),
+            SubCommand::with_name("create").about("Create the account"),
         )
         .subcommand(
-            SubCommand::with_name("account")
-                .about("Manage Mastodon accounts")
-                .subcommand(
-                    SubCommand::with_name("add")
-                        .about("Add a new account")
-                        .arg(
-                            Arg::with_name("name")
-                                .required(true)
-                                .takes_value(true)
-                                .help("Account name"),
-                        ),
-                )
-                .subcommand(
-                    SubCommand::with_name("remove")
-                        .about("Remove an account")
-                        .arg(
-                            Arg::with_name("name")
-                                .required(true)
-                                .takes_value(true)
-                                .help("Name of the account to be removed"),
-                        ),
-                ),
+            SubCommand::with_name("remove").about("Remove the account"),
+        )
+        .subcommand(
+            SubCommand::with_name("fetch")
+            .about("Fetch new favourites from this account only")
         )
         .subcommand(
             SubCommand::with_name("storage")
-                .about("Storage management")
-                .arg(
-                    Arg::with_name("account")
-                        .required(true)
-                        .takes_value(true)
-                        .help("Account name"),
-                )
-                .subcommand(
-                    SubCommand::with_name("add")
-                        .about("Add a storage for an account")
-                        .subcommand(SubCommand::with_name("filesystem")
-                            .about("Stores toots in the filesystem")
-                            .arg(Arg::with_name("path")
-                                .required(true)
-                                .takes_value(true)
-                                .help("Path where store toots in the filesystem")))));
+            .about("Account storage")
+            .subcommand(SubCommand::with_name("add")
+                .about("Add a new storage for the account")
+                .arg(Arg::with_name("type")
+                    .help("Storage type; valid types are: \"filesystem\"")
+                    .takes_value(true)
+                    .required(true)))
+            .subcommand(SubCommand::with_name("remove")
+                .about("Remove a storage from the account")
+                .arg(Arg::with_name("type")
+                    .help("Storage type to be removed")
+                    .takes_value(true)
+                    .required(true))));
     let matches = parser.get_matches();
-    match matches.subcommand() {
-        ("", _) => Command::Fetch,
-        ("fetch", _) => Command::Fetch,
-        ("account", Some(arguments)) => parse_account(arguments),
-        _ => Command::Unknown,
-    }
-}
-
-fn parse_account(arguments: &ArgMatches) -> Command {
-    log::debug!("Parsing accounts");
-    match arguments.subcommand() {
-        ("add", Some(argument)) => {
-            log::debug!("Must add new account");
-            let name = argument.value_of("name").unwrap();
-            Command::AddAccount(name.into())
+    if let Some(account) = matches.value_of("account") {
+        match matches.subcommand() {
+            ("fetch", _) => Command::Fetch(account.into()),
+            ("create", _) => Command::CreateAccount(account.into()),
+            ("remove", _) => Command::RemoveAccount(account.into()),
+            _ => Command::Unknown,
         }
-        ("remove", Some(argument)) => {
-            log::debug!("Must remove account");
-            let name = argument.value_of("name").unwrap();
-            Command::RemoveAccount(name.into())
-        }
-        _ => Command::Unknown,
+    } else {
+        log::debug!("No account provided, assuming fetch");
+        Command::FetchAll
     }
 }

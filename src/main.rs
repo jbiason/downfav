@@ -36,8 +36,10 @@ fn main() {
     env_logger::init();
 
     match args::parse() {
-        args::Command::Fetch => fetch_favourites(),
-        args::Command::AddAccount(account_name) => add_account(&account_name),
+        args::Command::FetchAll => fetch_favourites(),
+        args::Command::CreateAccount(account_name) => {
+            add_account(&account_name)
+        }
         _ => println!("Unknown command"),
     }
 }
