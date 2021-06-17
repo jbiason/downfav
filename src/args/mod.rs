@@ -32,6 +32,10 @@ pub enum Command {
     CreateAccount(String),
     /// Remove the account with the specified name
     RemoveAccount(String),
+    /// Add a storage for the account
+    AddStorage(String, String),
+    /// Remove a storage in the account
+    RemoveStorage(String, String),
 }
 
 /// Parse the command line, returning the necessary command.
@@ -72,6 +76,21 @@ pub fn parse() -> Command {
             ("fetch", _) => Command::Fetch(account.into()),
             ("create", _) => Command::CreateAccount(account.into()),
             ("remove", _) => Command::RemoveAccount(account.into()),
+            ("storage", Some(arguments)) => {
+                if let Some(_type) = arguments.value_of("type") {
+                    match arguments.subcommand() {
+                        ("add", _) => {
+                            Command::AddStorage(account.into(), _type.into())
+                        }
+                        ("remove", _) => {
+                            Command::RemoveStorage(account.into(), _type.into())
+                        }
+                        _ => Command::Unknown,
+                    }
+                } else {
+                    Command::Unknown
+                }
+            }
             _ => Command::Unknown,
         }
     } else {

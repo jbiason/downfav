@@ -74,7 +74,6 @@ impl Config {
     }
 
     /// Add a new account to the configuration file
-    // TODO Result for account already exists?
     pub fn add_account(&mut self, name: &str, configuration: Data) {
         let account_data = AccountConfig {
             favourite: None,
@@ -82,6 +81,11 @@ impl Config {
             filesystem: None,
         };
         self.0.insert(name.into(), account_data);
+    }
+
+    /// Remove account
+    pub fn remove_account(&mut self, name: &str) {
+        self.0.remove(name);
     }
 
     /// Save the current configuration file.

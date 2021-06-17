@@ -21,24 +21,25 @@ use std::io;
 use elefren::helpers::cli;
 use elefren::prelude::*;
 
-use crate::filesystem::storage::Filesystem;
-use crate::storage::data::Data;
-use crate::storage::joplin::Joplin;
-use crate::storage::org::Org;
-use crate::storage::storage::Storage;
-
 mod args;
 mod config;
-mod filesystem;
-mod storage;
+// mod filesystem;
+// mod storage;
 
 fn main() {
     env_logger::init();
 
     match args::parse() {
-        args::Command::FetchAll => fetch_favourites(),
+        args::Command::FetchAll => fetch_all_favourites(),
+        args::Command::Fetch(account_name) => fetch_favourites(&account_name),
         args::Command::CreateAccount(account_name) => {
             add_account(&account_name)
+        }
+        args::Command::RemoveAccount(account_name) => {
+            remove_account(&account_name)
+        }
+        args::Command::AddStorage(account_name, storage_type) => {
+            add_storage(&account_name, &storage_type)
         }
         _ => println!("Unknown command"),
     }
@@ -52,55 +53,90 @@ fn add_account(name: &str) {
     config.save().unwrap();
 }
 
-/// Retrieve favourites
-fn fetch_favourites() {
-    let config = match config::AccountConfig::get() {
-        Ok(config) => config,
-        Err(e) => {
-            log::debug!("Configuration error: {:?}", e);
-            let data = connect_to_mastodon();
-            config::AccountConfig::from(data)
-        }
-    };
+/// Remove account
+fn remove_account(name: &str) {
+    let mut config = config::config::Config::open().unwrap();
+    config.remove_account(name);
+    config.save().unwrap();
+}
 
-    let top = config.favourite.last.to_string();
-    log::debug!("Last favourite seen: {}", top);
-    let storage: Box<dyn Storage> = match (&config.joplin, &config.org) {
-        (Some(joplin), _) => Box::new(Joplin::new_from_config(&joplin)),
-        (None, Some(org)) => Box::new(Org::new_from_config(&org)),
-        (None, None) => Box::new(Filesystem::new()),
-    };
-
-    let client = Mastodon::from(config.mastodon.clone());
-    let most_recent_favourite = client
-        .favourites()
-        .unwrap()
-        .items_iter()
-        .take_while(|record| {
-            println!("Current ID: {} (last favourite: {})", record.id, top);
-            record.id != top
-        })
-        .map(|record| {
-            log::debug!("Incoming record: {:?}", record);
-            let conversion = Data::from(&record);
-            log::debug!("Converted record: {:?}", conversion);
-            storage.save(&conversion);
-            record
-        })
-        .fold(None, {
-            |first, current| -> Option<String> {
-                if first.is_some() {
-                    first
-                } else {
-                    Some(current.id)
-                }
-            }
-        });
-
-    if let Some(new_favourite) = most_recent_favourite {
-        config.save(&new_favourite);
+/// Add a storage for an account
+fn add_storage(account: &str, storage: &str) {
+    log::debug!("Adding storage \"{}\" for account \"{}\"", account, storage);
+    match storage {
+        "filesystem" => add_filesystem(account),
+        _ => println!("Storage unknown"),
     }
 }
+
+fn add_filesystem(account: &str) {
+    println!("Path for the files: ");
+    let mut path = String::new();
+    io::stdin()
+        .read_line(&mut path)
+        .expect("You need to enter yoru server URL");
+}
+
+/// Fetch from all accounts
+fn fetch_all_favourites() {
+    // let mut config = config::config::Config::open().unwrap();
+}
+
+/// Fetch the favourites from a single account
+fn fetch_favourites(_account: &str) {
+    //
+}
+
+// Retrieve favourites
+// fn fetch_favourites() {
+//     let config = match config::AccountConfig::get() {
+//         Ok(config) => config,
+//         Err(e) => {
+//             log::debug!("Configuration error: {:?}", e);
+//             let data = connect_to_mastodon();
+//             config::AccountConfig::from(data)
+//         }
+//     };
+
+//     let top = config.favourite.last.to_string();
+//     log::debug!("Last favourite seen: {}", top);
+//     let storage: Box<dyn Storage> = match (&config.joplin, &config.org) {
+//         (Some(joplin), _) => Box::new(Joplin::new_from_config(&joplin)),
+//         (None, Some(org)) => Box::new(Org::new_from_config(&org)),
+//         (None, None) => Box::new(Filesystem::new()),
+//     };
+
+//     let client = Mastodon::from(config.mastodon.clone());
+//     let most_recent_favourite = client
+//         .favourites()
+//         .unwrap()
+//         .items_iter()
+//         .take_while(|record| {
+//             println!("Current ID: {} (last favourite: {})", record.id, top);
+//             record.id != top
+//         })
+//         .map(|record| {
+//             log::debug!("Incoming record: {:?}", record);
+//             let conversion = Data::from(&record);
+//             log::debug!("Converted record: {:?}", conversion);
+//             storage.save(&conversion);
+//             record
+//         })
+//         .fold(None, {
+//             |first, current| -> Option<String> {
+//                 if first.is_some() {
+//                     first
+//                 } else {
+//                     Some(current.id)
+//                 }
+//             }
+//         });
+
+//     if let Some(new_favourite) = most_recent_favourite {
+//         config.save(&new_favourite);
+//     }
+// }
+
 /// Create a connection to a mastodon server.
 fn connect_to_mastodon() -> elefren::data::Data {
     println!("Your server URL: ");
