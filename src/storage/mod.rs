@@ -19,6 +19,6 @@
 pub mod attachment;
 pub mod data;
 pub mod helpers;
-pub mod joplin;
-pub mod org;
+// pub mod joplin;
+// pub mod org;
 pub mod storage;

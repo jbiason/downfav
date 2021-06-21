@@ -23,8 +23,8 @@ use elefren::prelude::*;
 
 mod args;
 mod config;
-// mod filesystem;
-// mod storage;
+mod filesystem;
+mod storage;
 
 fn main() {
     env_logger::init();

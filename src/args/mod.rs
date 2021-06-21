@@ -53,7 +53,11 @@ pub fn parse() -> Command {
         )
         .subcommand(
             SubCommand::with_name("fetch")
-            .about("Fetch new favourites from this account only")
+                .about("Fetch new favourites from this account only")
+        )
+        .subcommand(
+            SubCommand::with_name("sync")
+                .about("Sync the last seen favourite with the most recent one")
         )
         .subcommand(
             SubCommand::with_name("storage")
