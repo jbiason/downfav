@@ -18,10 +18,8 @@
 
 use std::io;
 
-use elefren::helpers::cli;
-use elefren::prelude::*;
-
 mod args;
+mod commands;
 mod config;
 mod filesystem;
 mod storage;
@@ -29,28 +27,12 @@ mod storage;
 fn main() {
     env_logger::init();
 
-    match args::parse() {
-        args::Command::FetchAll => fetch_all_favourites(),
-        args::Command::Fetch(account_name) => fetch_favourites(&account_name),
-        args::Command::CreateAccount(account_name) => {
-            add_account(&account_name)
-        }
-        args::Command::RemoveAccount(account_name) => {
-            remove_account(&account_name)
-        }
-        args::Command::AddStorage(account_name, storage_type) => {
-            add_storage(&account_name, &storage_type)
-        }
-        _ => println!("Unknown command"),
-    }
-}
-
-/// Create a new account
-fn add_account(name: &str) {
-    let mut config = config::config::Config::open().unwrap();
-    let connection_info = connect_to_mastodon();
-    config.add_account(name, connection_info);
-    config.save().unwrap();
+    let command = args::parse();
+    command.execute();
+    // match args::parse() {
+    //     Ok(command) => command.execute(),
+    //     Err(()) => println!("error"),
+    // }
 }
 
 /// Remove account
@@ -136,18 +118,3 @@ fn fetch_favourites(_account: &str) {
 //         config.save(&new_favourite);
 //     }
 // }
-
-/// Create a connection to a mastodon server.
-fn connect_to_mastodon() -> elefren::data::Data {
-    println!("Your server URL: ");
-    let mut server = String::new();
-    io::stdin()
-        .read_line(&mut server)
-        .expect("You need to enter yoru server URL");
-
-    let registration = Registration::new(server.trim())
-        .client_name("downfav")
-        .build()
-        .unwrap();
-    cli::authenticate(registration).unwrap().data
-}

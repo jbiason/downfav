@@ -20,26 +20,11 @@ use clap::App;
 use clap::Arg;
 use clap::SubCommand;
 
-/// Possible commands
-pub enum Command {
-    /// Got a command that we don't know
-    Unknown,
-    /// Fetch favourites from all accounts
-    FetchAll,
-    /// Fetch favourites from a specific account
-    Fetch(String),
-    /// Add a new account with the specified name
-    CreateAccount(String),
-    /// Remove the account with the specified name
-    RemoveAccount(String),
-    /// Add a storage for the account
-    AddStorage(String, String),
-    /// Remove a storage in the account
-    RemoveStorage(String, String),
-}
+use super::commands::addaccount::AddAccount;
+use super::commands::Command;
 
 /// Parse the command line, returning the necessary command.
-pub fn parse() -> Command {
+pub fn parse() -> Box<dyn Command> {
     let parser = App::new(clap::crate_name!())
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
@@ -73,32 +58,8 @@ pub fn parse() -> Command {
                 .arg(Arg::with_name("type")
                     .help("Storage type to be removed")
                     .takes_value(true)
-                    .required(true))));
+                     .required(true))));
+
     let matches = parser.get_matches();
-    if let Some(account) = matches.value_of("account") {
-        match matches.subcommand() {
-            ("fetch", _) => Command::Fetch(account.into()),
-            ("create", _) => Command::CreateAccount(account.into()),
-            ("remove", _) => Command::RemoveAccount(account.into()),
-            ("storage", Some(arguments)) => {
-                if let Some(_type) = arguments.value_of("type") {
-                    match arguments.subcommand() {
-                        ("add", _) => {
-                            Command::AddStorage(account.into(), _type.into())
-                        }
-                        ("remove", _) => {
-                            Command::RemoveStorage(account.into(), _type.into())
-                        }
-                        _ => Command::Unknown,
-                    }
-                } else {
-                    Command::Unknown
-                }
-            }
-            _ => Command::Unknown,
-        }
-    } else {
-        log::debug!("No account provided, assuming fetch");
-        Command::FetchAll
-    }
+    Box::new(AddAccount::new("something"))
 }
