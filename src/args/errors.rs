@@ -16,12 +16,9 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pub mod addaccount;
-pub mod errors;
-pub mod removeaccount;
-
-use self::errors::CommandError;
-
-pub trait Command {
-    fn execute(&self) -> Result<&str, CommandError>;
+/// Parsing errors
+#[derive(Debug)]
+pub enum ParsingError {
+    /// The command is not recognized
+    UnknownCommand,
 }

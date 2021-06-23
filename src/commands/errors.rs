@@ -16,12 +16,15 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pub mod addaccount;
-pub mod errors;
-pub mod removeaccount;
+/// Errors for the commands
+#[derive(Debug)]
+pub enum CommandError {
+    /// Error connecting to the Mastodon account
+    ConnectError,
 
-use self::errors::CommandError;
+    /// Configuration file is broken
+    ConfigError,
 
-pub trait Command {
-    fn execute(&self) -> Result<&str, CommandError>;
+    /// The requested account does not exist
+    NoSuchAccount,
 }

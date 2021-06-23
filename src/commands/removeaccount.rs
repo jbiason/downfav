@@ -16,56 +16,25 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use std::io;
-use std::io::prelude::*;
-
-use elefren::helpers::cli;
-use elefren::prelude::*;
-
 use super::errors::CommandError;
 use super::Command;
 use crate::config::config::Config;
-use crate::config::errors::ConfigError;
 
-pub struct AddAccount {
+pub struct RemoveAccount {
     name: String,
 }
 
-impl AddAccount {
+impl RemoveAccount {
     pub fn new(name: &str) -> Self {
         Self { name: name.into() }
     }
 }
 
-impl Command for AddAccount {
+impl Command for RemoveAccount {
     fn execute(&self) -> Result<&str, CommandError> {
-        let mut server = String::new();
-
-        print!("Your server URL: ");
-        io::stdout().flush().unwrap();
-        io::stdin()
-            .read_line(&mut server)
-            .expect("you need to ender your server URL");
-        let registration = Registration::new(server.trim())
-            .client_name("Downfav")
-            .build()?;
-        let connection = cli::authenticate(registration)?.data;
-
         let mut config = Config::open()?;
-        config.add_account(&self.name, connection);
+        config.remove_account(&self.name);
         config.save()?;
-        Ok("Account created")
-    }
-}
-
-impl From<elefren::Error> for CommandError {
-    fn from(_: elefren::Error) -> CommandError {
-        CommandError::ConnectError
-    }
-}
-
-impl From<ConfigError> for CommandError {
-    fn from(_: ConfigError) -> CommandError {
-        CommandError::ConfigError
+        Ok("Account removed")
     }
 }

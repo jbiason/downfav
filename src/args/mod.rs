@@ -16,20 +16,22 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+mod errors;
+
 use clap::App;
 use clap::Arg;
 use clap::SubCommand;
 
-use super::commands::addaccount::AddAccount;
-use super::commands::Command;
+use self::errors::ParsingError;
+use super::commands;
 
 /// Parse the command line, returning the necessary command.
-pub fn parse() -> Box<dyn Command> {
+pub fn parse() -> Result<Box<dyn commands::Command>, ParsingError> {
     let parser = App::new(clap::crate_name!())
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
         .about(clap::crate_description!())
-        .arg(Arg::with_name("account").help("Account alias"))
+        .arg(Arg::with_name("account").help("Account alias").required(true))
         .subcommand(
             SubCommand::with_name("create").about("Create the account"),
         )
@@ -61,5 +63,14 @@ pub fn parse() -> Box<dyn Command> {
                      .required(true))));
 
     let matches = parser.get_matches();
-    Box::new(AddAccount::new("something"))
+    let account_name = matches.value_of("account").unwrap(); // we can unwrap 'cause it is required
+    match matches.subcommand() {
+        ("create", _) => Ok(Box::new(commands::addaccount::AddAccount::new(
+            account_name.into(),
+        ))),
+        ("remove", _) => Ok(Box::new(
+            commands::removeaccount::RemoveAccount::new(account_name.into()),
+        )),
+        _ => Err(ParsingError::UnknownCommand),
+    }
 }

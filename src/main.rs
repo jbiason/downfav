@@ -16,8 +16,6 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use std::io;
-
 mod args;
 mod commands;
 mod config;
@@ -27,46 +25,10 @@ mod storage;
 fn main() {
     env_logger::init();
 
-    let command = args::parse();
-    command.execute();
-    // match args::parse() {
-    //     Ok(command) => command.execute(),
-    //     Err(()) => println!("error"),
-    // }
-}
-
-/// Remove account
-fn remove_account(name: &str) {
-    let mut config = config::config::Config::open().unwrap();
-    config.remove_account(name);
-    config.save().unwrap();
-}
-
-/// Add a storage for an account
-fn add_storage(account: &str, storage: &str) {
-    log::debug!("Adding storage \"{}\" for account \"{}\"", account, storage);
-    match storage {
-        "filesystem" => add_filesystem(account),
-        _ => println!("Storage unknown"),
+    match args::parse() {
+        Ok(command) => println!("{}", command.execute().unwrap()),
+        Err(e) => println!("Error: {:?}", e),
     }
-}
-
-fn add_filesystem(account: &str) {
-    println!("Path for the files: ");
-    let mut path = String::new();
-    io::stdin()
-        .read_line(&mut path)
-        .expect("You need to enter yoru server URL");
-}
-
-/// Fetch from all accounts
-fn fetch_all_favourites() {
-    // let mut config = config::config::Config::open().unwrap();
-}
-
-/// Fetch the favourites from a single account
-fn fetch_favourites(_account: &str) {
-    //
 }
 
 // Retrieve favourites
