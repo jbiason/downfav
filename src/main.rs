@@ -26,7 +26,7 @@ fn main() {
     env_logger::init();
 
     match args::parse() {
-        Ok(command) => println!("{}", command.execute().unwrap()),
+        Ok(command) => command.execute().unwrap(),
         Err(e) => println!("Error: {:?}", e),
     }
 }

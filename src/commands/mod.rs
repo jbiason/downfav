@@ -16,12 +16,94 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pub mod addaccount;
 pub mod errors;
-pub mod removeaccount;
+
+use std::io;
+use std::io::prelude::*;
+
+use elefren::helpers::cli;
+use elefren::prelude::*;
 
 use self::errors::CommandError;
+use crate::config::config::Config;
 
-pub trait Command {
-    fn execute(&self) -> Result<&str, CommandError>;
+type CommandResult = Result<(), CommandError>;
+
+/// Available Storages
+pub enum StorageType {
+    /// Store in the filesystem, as Markdown
+    Markdown,
+
+    /// Store in the filesystem, as Org-Mode
+    Org,
+
+    /// Store in Joplin
+    Joplin,
+}
+
+/// Available commands
+pub enum Command {
+    /// Add a new account
+    AddAccount(String),
+
+    /// Remove an account
+    RemoveAccount(String),
+
+    /// Add a storage in an account
+    AddStorage(String, StorageType),
+}
+
+impl Command {
+    pub fn add_account(name: &str) -> Self {
+        Command::AddAccount(name.into())
+    }
+
+    pub fn remove_account(name: &str) -> Self {
+        Command::RemoveAccount(name.into())
+    }
+
+    pub fn add_storage(account: &str, storage: StorageType) -> Self {
+        Command::AddStorage(account.into(), storage)
+    }
+
+    /// Execute the command, based on its value
+    pub fn execute(&self) -> CommandResult {
+        match self {
+            Command::AddAccount(name) => add_account(name),
+            Command::RemoveAccount(name) => remove_account(name),
+            Command::AddStorage(account, storage) => {
+                add_storage(account, storage)
+            }
+        }
+    }
+}
+
+fn add_account(name: &str) -> CommandResult {
+    let mut server = String::new();
+
+    print!("Your server URL: ");
+    io::stdout().flush().unwrap();
+    io::stdin()
+        .read_line(&mut server)
+        .expect("you need to ender your server URL");
+    let registration = Registration::new(server.trim())
+        .client_name("Downfav")
+        .build()?;
+    let connection = cli::authenticate(registration)?.data;
+
+    let mut config = Config::open()?;
+    config.add_account(&name, connection);
+    config.save()?;
+    Ok(())
+}
+
+fn remove_account(name: &str) -> CommandResult {
+    let mut config = Config::open()?;
+    config.remove_account(&name);
+    config.save()?;
+    Ok(())
+}
+
+fn add_storage(account: &str, storage: &StorageType) -> CommandResult {
+    Ok(())
 }

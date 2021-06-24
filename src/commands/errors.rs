@@ -16,6 +16,8 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::config::errors::ConfigError;
+
 /// Errors for the commands
 #[derive(Debug)]
 pub enum CommandError {
@@ -23,8 +25,20 @@ pub enum CommandError {
     ConnectError,
 
     /// Configuration file is broken
-    ConfigError,
+    ConfigError(ConfigError),
 
     /// The requested account does not exist
     NoSuchAccount,
+}
+
+impl From<elefren::Error> for CommandError {
+    fn from(_: elefren::Error) -> CommandError {
+        CommandError::ConnectError
+    }
+}
+
+impl From<ConfigError> for CommandError {
+    fn from(e: ConfigError) -> CommandError {
+        CommandError::ConfigError(e)
+    }
 }
