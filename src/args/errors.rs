@@ -16,9 +16,17 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::commands::errors::CommandError;
+
 /// Parsing errors
 #[derive(Debug)]
 pub enum ParsingError {
     /// The command is not recognized
     UnknownCommand,
+}
+
+impl From<CommandError> for ParsingError {
+    fn from(_: CommandError) -> Self {
+        Self::UnknownCommand
+    }
 }

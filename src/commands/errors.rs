@@ -29,6 +29,9 @@ pub enum CommandError {
 
     /// The requested account does not exist
     NoSuchAccount,
+
+    /// The storage type requested does not exist
+    NoSuchStorage,
 }
 
 impl From<elefren::Error> for CommandError {

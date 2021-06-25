@@ -18,6 +18,7 @@
 
 pub mod errors;
 
+use std::convert::TryFrom;
 use std::io;
 use std::io::prelude::*;
 
@@ -39,6 +40,19 @@ pub enum StorageType {
 
     /// Store in Joplin
     Joplin,
+}
+
+impl TryFrom<&str> for StorageType {
+    type Error = errors::CommandError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        match s {
+            "markdown" => Ok(StorageType::Markdown),
+            "org" => Ok(StorageType::Org),
+            "joplin" => Ok(StorageType::Joplin),
+            _ => Err(Self::Error::NoSuchStorage),
+        }
+    }
 }
 
 /// Available commands

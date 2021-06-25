@@ -18,12 +18,15 @@
 
 mod errors;
 
+use std::convert::TryFrom;
+
 use clap::App;
 use clap::Arg;
 use clap::SubCommand;
 
 use self::errors::ParsingError;
 use super::commands::Command;
+use super::commands::StorageType;
 
 /// Parse the command line, returning the necessary command.
 pub fn parse() -> Result<Command, ParsingError> {
@@ -86,6 +89,14 @@ pub fn parse() -> Result<Command, ParsingError> {
     match matches.subcommand() {
         ("create", _) => Ok(Command::add_account(account_name.into())),
         ("remove", _) => Ok(Command::remove_account(account_name.into())),
+        ("storage", Some(args)) => {
+            let storage =
+                args.subcommand_name().ok_or(ParsingError::UnknownCommand)?;
+            Ok(Command::add_storage(
+                account_name.into(),
+                StorageType::try_from(storage)?,
+            ))
+        }
         _ => Err(ParsingError::UnknownCommand),
     }
 }
