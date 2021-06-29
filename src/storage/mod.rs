@@ -21,4 +21,5 @@ pub mod data;
 pub mod helpers;
 // pub mod joplin;
 // pub mod org;
+pub mod markdown;
 pub mod storage;

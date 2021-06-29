@@ -27,6 +27,8 @@ use elefren::prelude::*;
 
 use self::errors::CommandError;
 use crate::config::config::Config;
+use crate::config::Configurable;
+use crate::storage::markdown::config::MarkdownConfig;
 
 type CommandResult = Result<(), CommandError>;
 
@@ -119,5 +121,14 @@ fn remove_account(name: &str) -> CommandResult {
 }
 
 fn add_storage(account: &str, storage: &StorageType) -> CommandResult {
+    let mut config = Config::open()?;
+    match storage {
+        StorageType::Markdown => {
+            let storage_config = MarkdownConfig::config()?;
+            config.set_storage_markdown(account, storage_config);
+        }
+        _ => unimplemented!(),
+    }
+    config.save()?;
     Ok(())
 }

@@ -16,12 +16,32 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use std::io::Write;
+
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
+use crate::config::errors::ConfigError;
+use crate::config::Configurable;
+
 /// Configuration for the Filesystem backend
 #[derive(Serialize, Deserialize, Debug)]
-pub struct FilesystemConfig {
+pub struct MarkdownConfig {
     /// Path where files will be stored.
     pub path: String,
+}
+
+impl Configurable for MarkdownConfig {
+    fn config() -> Result<Self, ConfigError> {
+        print!("Base path for your files: ");
+        std::io::stdout().flush().expect("Failed to flush stdout!");
+
+        let mut path = String::new();
+        std::io::stdin().read_line(&mut path)?;
+        let fullpath = shellexpand::full(path.trim())?;
+        log::debug!("Full path: {:?}", fullpath);
+        Ok(Self {
+            path: fullpath.into(),
+        })
+    }
 }

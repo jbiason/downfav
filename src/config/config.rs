@@ -27,7 +27,7 @@ use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
 use crate::config::errors::ConfigError;
-use crate::filesystem::config::FilesystemConfig;
+use crate::storage::markdown::config::MarkdownConfig;
 
 /// The last seen favourite
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,7 +40,7 @@ struct Favourite {
 struct AccountConfig {
     favourite: Option<Favourite>,
     mastodon: Data,
-    filesystem: Option<FilesystemConfig>,
+    markdown: Option<MarkdownConfig>,
     // joplin: Option<JoplinConfig>,
     // org: Option<OrgConfig>,
 }
@@ -78,7 +78,7 @@ impl Config {
         let account_data = AccountConfig {
             favourite: None,
             mastodon: configuration,
-            filesystem: None,
+            markdown: None,
         };
         self.0.insert(name.into(), account_data);
     }
@@ -86,6 +86,18 @@ impl Config {
     /// Remove account
     pub fn remove_account(&mut self, name: &str) {
         self.0.remove(name);
+    }
+
+    /// Set the configuration for the markdown storage
+    pub fn set_storage_markdown(
+        &mut self,
+        account: &str,
+        config: MarkdownConfig,
+    ) {
+        match self.0.get_mut(account.into()) {
+            Some(account) => account.markdown = Some(config),
+            None => {}
+        }
     }
 
     /// Save the current configuration file.

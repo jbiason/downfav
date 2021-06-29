@@ -19,7 +19,6 @@
 mod args;
 mod commands;
 mod config;
-mod filesystem;
 mod storage;
 
 fn main() {

@@ -25,6 +25,8 @@ pub enum ConfigError {
     ConfigFileIsBroken,
     /// There was something broken with the data and we couldn't save it properly
     InvalidConfiguration,
+    /// The select path is invalid
+    InvalidPath,
 }
 
 impl From<toml::de::Error> for ConfigError {
@@ -45,5 +47,12 @@ impl From<toml::ser::Error> for ConfigError {
     fn from(e: toml::ser::Error) -> Self {
         log::debug!("TOML error: {:?}", e);
         ConfigError::InvalidConfiguration
+    }
+}
+
+impl From<shellexpand::LookupError<std::env::VarError>> for ConfigError {
+    fn from(e: shellexpand::LookupError<std::env::VarError>) -> Self {
+        log::debug!("Shellexpand error: {:?}", e);
+        ConfigError::InvalidPath
     }
 }
