@@ -26,6 +26,7 @@ use elefren::helpers::cli;
 use elefren::prelude::*;
 
 use self::errors::CommandError;
+use crate::config::config::AccountConfig;
 use crate::config::config::Config;
 use crate::config::Configurable;
 use crate::storage::markdown::config::MarkdownConfig;
@@ -143,14 +144,17 @@ fn add_storage(account: &str, storage: &StorageType) -> CommandResult {
 
 fn fetch_all() -> CommandResult {
     let mut config = Config::open()?;
-    for (name, account_config) in config {
+    for (name, mut account_config) in config {
         log::debug!("Fetching new items from {:?}", name);
-        if let Some(markdown_config) = account_config.markdown {
-            log::debug!(
-                "Markdown set to download to {:?}",
-                markdown_config.path
-            );
-        }
+        fetch_account(&mut account_config)?;
+    }
+    Ok(())
+}
+
+fn fetch_account(account: &mut AccountConfig) -> CommandResult {
+    // Do the whole for into favourites here; after finding one favourite, do the dance below
+    if let Some(markdown_config) = account.markdown.as_ref() {
+        log::debug!("Markdown set to download to {:?}", markdown_config.path);
     }
     Ok(())
 }
