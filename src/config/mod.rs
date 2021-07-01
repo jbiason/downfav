@@ -20,7 +20,6 @@ pub mod config;
 pub mod errors;
 
 use self::errors::ConfigError;
-
 pub trait Configurable {
     fn config() -> Result<Self, ConfigError>
     where

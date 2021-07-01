@@ -37,10 +37,10 @@ struct Favourite {
 
 /// Account configuration
 #[derive(Serialize, Deserialize, Debug)]
-struct AccountConfig {
+pub struct AccountConfig {
     favourite: Option<Favourite>,
     mastodon: Data,
-    markdown: Option<MarkdownConfig>,
+    pub markdown: Option<MarkdownConfig>,
     // joplin: Option<JoplinConfig>,
     // org: Option<OrgConfig>,
 }
@@ -61,7 +61,7 @@ impl Config {
     /// Open the configuration file; if it doesn't exist, returns an empty set.
     pub fn open() -> Result<Self, ConfigError> {
         let filename = Config::filename()?;
-        log::debug!("Trying to open file \"{:?}\"", filename);
+        log::debug!("Trying to open file {:?}", filename);
         match File::open(filename) {
             Ok(mut fp) => {
                 let mut contents = String::new();
@@ -104,9 +104,20 @@ impl Config {
     pub fn save(&self) -> Result<(), ConfigError> {
         let content = toml::to_string(&self.0)?;
         let filename = Config::filename()?;
-        log::debug!("Saving configuration to file \"{:?}\"", filename);
+        log::debug!("Saving configuration to file {:?}", filename);
         let mut fp = File::create(filename)?;
         fp.write_all(content.as_bytes())?;
         Ok(())
+    }
+}
+
+/// Produce an iterator for all the accounts in the configuration.
+impl IntoIterator for Config {
+    type Item = (String, AccountConfig);
+    type IntoIter =
+        <HashMap<std::string::String, AccountConfig> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
     }
 }

@@ -67,6 +67,9 @@ pub enum Command {
 
     /// Add a storage in an account
     AddStorage(String, StorageType),
+
+    /// Fetch favourites from all accounts
+    FetchAll,
 }
 
 impl Command {
@@ -82,6 +85,10 @@ impl Command {
         Command::AddStorage(account.into(), storage)
     }
 
+    pub fn fetch_all() -> Self {
+        Command::FetchAll
+    }
+
     /// Execute the command, based on its value
     pub fn execute(&self) -> CommandResult {
         match self {
@@ -90,6 +97,7 @@ impl Command {
             Command::AddStorage(account, storage) => {
                 add_storage(account, storage)
             }
+            Command::FetchAll => fetch_all(),
         }
     }
 }
@@ -130,5 +138,19 @@ fn add_storage(account: &str, storage: &StorageType) -> CommandResult {
         _ => unimplemented!(),
     }
     config.save()?;
+    Ok(())
+}
+
+fn fetch_all() -> CommandResult {
+    let mut config = Config::open()?;
+    for (name, account_config) in config {
+        log::debug!("Fetching new items from {:?}", name);
+        if let Some(markdown_config) = account_config.markdown {
+            log::debug!(
+                "Markdown set to download to {:?}",
+                markdown_config.path
+            );
+        }
+    }
     Ok(())
 }

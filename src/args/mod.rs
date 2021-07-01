@@ -37,7 +37,7 @@ pub fn parse() -> Result<Command, ParsingError> {
         .arg(
             Arg::with_name("account")
                 .help("Account alias")
-                .required(true),
+                .required(false),
         )
         .subcommand(SubCommand::with_name("create").about("Create the account"))
         .subcommand(SubCommand::with_name("remove").about("Remove the account"))
@@ -85,23 +85,26 @@ pub fn parse() -> Result<Command, ParsingError> {
         );
 
     let matches = parser.get_matches();
-    let account_name = matches.value_of("account").unwrap(); // we can unwrap 'cause it is required
-    match matches.subcommand() {
-        ("create", _) => Ok(Command::add_account(account_name.into())),
-        ("remove", _) => Ok(Command::remove_account(account_name.into())),
-        ("storage", Some(args)) => match args.subcommand() {
-            ("add", Some(add_args)) => {
-                let storage = add_args
-                    .subcommand_name()
-                    .ok_or(ParsingError::UnknownCommand)?;
-                log::debug!("Storage: {:?}", storage);
-                Ok(Command::add_storage(
-                    account_name.into(),
-                    StorageType::try_from(storage)?,
-                ))
-            }
-            _ => unimplemented!(),
-        },
-        _ => Err(ParsingError::UnknownCommand),
+    if let Some(account_name) = matches.value_of("account") {
+        match matches.subcommand() {
+            ("create", _) => Ok(Command::add_account(account_name.into())),
+            ("remove", _) => Ok(Command::remove_account(account_name.into())),
+            ("storage", Some(args)) => match args.subcommand() {
+                ("add", Some(add_args)) => {
+                    let storage = add_args
+                        .subcommand_name()
+                        .ok_or(ParsingError::UnknownCommand)?;
+                    log::debug!("Storage: {:?}", storage);
+                    Ok(Command::add_storage(
+                        account_name.into(),
+                        StorageType::try_from(storage)?,
+                    ))
+                }
+                _ => unimplemented!(),
+            },
+            _ => Err(ParsingError::UnknownCommand),
+        }
+    } else {
+        Ok(Command::fetch_all())
     }
 }
