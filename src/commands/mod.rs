@@ -29,6 +29,7 @@ use self::errors::CommandError;
 use crate::config::config::AccountConfig;
 use crate::config::config::Config;
 use crate::config::Configurable;
+use crate::storage::data::Data;
 use crate::storage::markdown::config::MarkdownConfig;
 
 type CommandResult = Result<(), CommandError>;
@@ -146,15 +147,35 @@ fn fetch_all() -> CommandResult {
     let mut config = Config::open()?;
     for (name, mut account_config) in config {
         log::debug!("Fetching new items from {:?}", name);
-        fetch_account(&mut account_config)?;
+        let new_top_favourite = fetch_account(&mut account_config)?;
+        // XXX implement
+        config.set_new_favourite(new_top_favourite);
     }
+    config.save()?;
     Ok(())
 }
 
 fn fetch_account(account: &mut AccountConfig) -> CommandResult {
-    // Do the whole for into favourites here; after finding one favourite, do the dance below
-    if let Some(markdown_config) = account.markdown.as_ref() {
-        log::debug!("Markdown set to download to {:?}", markdown_config.path);
+    // XXX before anything, we could check if there is any storage enabled.
+    // XXX we could create a list of storages, so after retrieving the toot
+    //     and converting to our format, we just go through this list and call
+    //     `.save()` in each.
+    let top = account.top_favourite();
+    let mut most_recent: Option<String> = None;
+    let client = Mastodon::from(account.mastodon());
+    for toot in client.favourites()?.items_iter() {
+        if toot.id == top {
+            break;
+        }
+
+        if most_recent.is_none() {
+            most_recent = Some((&toot.id).into());
+        }
+
+        let conversion = Data::from(&toot);
+
+        // XXX storage here
+        // storage.save(&conversion)
     }
     Ok(())
 }

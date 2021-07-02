@@ -38,11 +38,24 @@ struct Favourite {
 /// Account configuration
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AccountConfig {
-    favourite: Option<Favourite>,
+    pub favourite: Option<Favourite>,
     mastodon: Data,
-    pub markdown: Option<MarkdownConfig>,
+    markdown: Option<MarkdownConfig>,
     // joplin: Option<JoplinConfig>,
     // org: Option<OrgConfig>,
+}
+
+impl AccountConfig {
+    pub fn top_favourite(&self) -> String {
+        match self.favourite {
+            Some(favourite) => favourite.last.into(),
+            None => "0".into(),
+        }
+    }
+
+    pub fn mastodon(&self) -> Data {
+        self.mastodon.clone()
+    }
 }
 
 /// The main configuration
