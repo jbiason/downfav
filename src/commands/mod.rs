@@ -26,7 +26,7 @@ use elefren::helpers::cli;
 use elefren::prelude::*;
 
 use self::errors::CommandError;
-use crate::config::config::AccountConfig;
+use crate::config::account::AccountConfig;
 use crate::config::config::Config;
 use crate::config::Configurable;
 use crate::storage::data::Data;
@@ -145,12 +145,12 @@ fn add_storage(account: &str, storage: &StorageType) -> CommandResult {
 
 fn fetch_all() -> CommandResult {
     let mut config = Config::open()?;
-    for (name, mut account_config) in config {
-        log::debug!("Fetching new items from {:?}", name);
-        let new_top_favourite = fetch_account(&mut account_config)?;
-        // XXX implement
-        config.set_new_favourite(new_top_favourite);
-    }
+    // for (name, mut account_config) in &config {
+    //     log::debug!("Fetching new items from {:?}", name);
+    //     let new_top_favourite = fetch_account(&mut account_config)?;
+    //     // XXX implement
+    //     // config.set_new_favourite(new_top_favourite);
+    // }
     config.save()?;
     Ok(())
 }

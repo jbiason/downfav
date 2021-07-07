@@ -26,37 +26,9 @@ use elefren::Data;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
+use super::account::AccountConfig;
 use crate::config::errors::ConfigError;
 use crate::storage::markdown::config::MarkdownConfig;
-
-/// The last seen favourite
-#[derive(Serialize, Deserialize, Debug)]
-struct Favourite {
-    last: String,
-}
-
-/// Account configuration
-#[derive(Serialize, Deserialize, Debug)]
-pub struct AccountConfig {
-    pub favourite: Option<Favourite>,
-    mastodon: Data,
-    markdown: Option<MarkdownConfig>,
-    // joplin: Option<JoplinConfig>,
-    // org: Option<OrgConfig>,
-}
-
-impl AccountConfig {
-    pub fn top_favourite(&self) -> String {
-        match self.favourite {
-            Some(favourite) => favourite.last.into(),
-            None => "0".into(),
-        }
-    }
-
-    pub fn mastodon(&self) -> Data {
-        self.mastodon.clone()
-    }
-}
 
 /// The main configuration
 #[derive(Serialize, Deserialize, Debug)]
@@ -88,11 +60,7 @@ impl Config {
 
     /// Add a new account to the configuration file
     pub fn add_account(&mut self, name: &str, configuration: Data) {
-        let account_data = AccountConfig {
-            favourite: None,
-            mastodon: configuration,
-            markdown: None,
-        };
+        let account_data = AccountConfig::new(configuration);
         self.0.insert(name.into(), account_data);
     }
 
@@ -108,7 +76,7 @@ impl Config {
         config: MarkdownConfig,
     ) {
         match self.0.get_mut(account.into()) {
-            Some(account) => account.markdown = Some(config),
+            Some(account_config) => account_config.set_markdown(config),
             None => {}
         }
     }
@@ -121,16 +89,5 @@ impl Config {
         let mut fp = File::create(filename)?;
         fp.write_all(content.as_bytes())?;
         Ok(())
-    }
-}
-
-/// Produce an iterator for all the accounts in the configuration.
-impl IntoIterator for Config {
-    type Item = (String, AccountConfig);
-    type IntoIter =
-        <HashMap<std::string::String, AccountConfig> as IntoIterator>::IntoIter;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
     }
 }

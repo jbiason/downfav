@@ -16,8 +16,10 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+pub mod account;
 pub mod config;
 pub mod errors;
+pub mod favourite;
 
 use self::errors::ConfigError;
 pub trait Configurable {
