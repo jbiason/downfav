@@ -23,12 +23,14 @@ use std::convert::TryFrom;
 use clap::App;
 use clap::Arg;
 use clap::SubCommand;
+use log_derive::logfn;
 
 use self::errors::ParsingError;
 use super::commands::Command;
 use super::commands::StorageType;
 
 /// Parse the command line, returning the necessary command.
+#[logfn(Trace)]
 pub fn parse() -> Result<Command, ParsingError> {
     let parser = App::new(clap::crate_name!())
         .version(clap::crate_version!())

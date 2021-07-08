@@ -23,6 +23,8 @@ use std::path::PathBuf;
 
 use directories::ProjectDirs;
 use elefren::Data;
+use log_derive::logfn;
+use log_derive::logfn_inputs;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 
@@ -36,6 +38,7 @@ pub struct Config(HashMap<String, AccountConfig>);
 
 impl Config {
     /// Figure out the filename for the configuration file.
+    #[logfn(Trace)]
     fn filename() -> Result<PathBuf, ConfigError> {
         match ProjectDirs::from("me", "JulioBiason", "downfav.toml") {
             Some(proj_dirs) => Ok(proj_dirs.config_dir().into()),
@@ -59,17 +62,20 @@ impl Config {
     }
 
     /// Add a new account to the configuration file
+    #[logfn_inputs(Trace)]
     pub fn add_account(&mut self, name: &str, configuration: Data) {
         let account_data = AccountConfig::new(configuration);
         self.0.insert(name.into(), account_data);
     }
 
     /// Remove account
+    #[logfn_inputs(Trace)]
     pub fn remove_account(&mut self, name: &str) {
         self.0.remove(name);
     }
 
     /// Set the configuration for the markdown storage
+    #[logfn_inputs(Trace)]
     pub fn set_storage_markdown(
         &mut self,
         account: &str,

@@ -22,6 +22,8 @@ mod config;
 mod storage;
 
 fn main() {
+    env_logger::init();
+
     match args::parse() {
         Ok(command) => command.execute().unwrap(),
         Err(e) => println!("Error: {:?}", e),

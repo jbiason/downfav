@@ -35,6 +35,7 @@ use crate::storage::markdown::config::MarkdownConfig;
 type CommandResult = Result<(), CommandError>;
 
 /// Available Storages
+#[derive(Debug)]
 pub enum StorageType {
     /// Store in the filesystem, as Markdown
     Markdown,
@@ -60,6 +61,7 @@ impl TryFrom<&str> for StorageType {
 }
 
 /// Available commands
+#[derive(Debug)]
 pub enum Command {
     /// Add a new account
     AddAccount(String),
