@@ -34,16 +34,16 @@ use crate::storage::markdown::config::MarkdownConfig;
 
 type CommandResult = Result<(), CommandError>;
 
-/// Available Storages
+/// Available Storages.
 #[derive(Debug)]
 pub enum StorageType {
-    /// Store in the filesystem, as Markdown
+    /// Store in the filesystem, as Markdown.
     Markdown,
 
-    /// Store in the filesystem, as Org-Mode
+    /// Store in the filesystem, as Org-Mode.
     Org,
 
-    /// Store in Joplin
+    /// Store in Joplin.
     Joplin,
 }
 
@@ -60,20 +60,26 @@ impl TryFrom<&str> for StorageType {
     }
 }
 
-/// Available commands
+/// Available commands.
 #[derive(Debug)]
 pub enum Command {
-    /// Add a new account
+    /// Add a new account.
     AddAccount(String),
 
-    /// Remove an account
+    /// Remove an account.
     RemoveAccount(String),
 
-    /// Add a storage in an account
+    /// Add a storage in an account.
     AddStorage(String, StorageType),
 
-    /// Fetch favourites from all accounts
+    /// Fetch favourites from all accounts.
     FetchAll,
+
+    /// Fetch one single account.
+    Fetch(String),
+
+    /// Forces the last favourite to be the current favourite.
+    Sync(String),
 }
 
 impl Command {
@@ -93,6 +99,14 @@ impl Command {
         Command::FetchAll
     }
 
+    pub fn fetch(account: &str) -> Self {
+        Command::Fetch(account.into())
+    }
+
+    pub fn sync(account: &str) -> Self {
+        Command::Sync(account.into())
+    }
+
     /// Execute the command, based on its value
     pub fn execute(&self) -> CommandResult {
         match self {
@@ -102,6 +116,8 @@ impl Command {
                 add_storage(account, storage)
             }
             Command::FetchAll => fetch_all(),
+            Command::Fetch(account) => fetch_account(account),
+            Command::Sync(account) => sync_account(account),
         }
     }
 }
@@ -157,7 +173,11 @@ fn fetch_all() -> CommandResult {
     Ok(())
 }
 
-fn fetch_account(account: &mut AccountConfig) -> CommandResult {
+fn fetch_account(account: &str) -> CommandResult {
+    Ok(())
+}
+
+fn fetch_account_favourites(account: &mut AccountConfig) -> CommandResult {
     // XXX before anything, we could check if there is any storage enabled.
     // XXX we could create a list of storages, so after retrieving the toot
     //     and converting to our format, we just go through this list and call
@@ -179,5 +199,9 @@ fn fetch_account(account: &mut AccountConfig) -> CommandResult {
         // XXX storage here
         // storage.save(&conversion)
     }
+    Ok(())
+}
+
+fn sync_account(account: &str) -> CommandResult {
     Ok(())
 }
