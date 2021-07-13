@@ -163,12 +163,12 @@ fn add_storage(account: &str, storage: &StorageType) -> CommandResult {
 
 fn fetch_all() -> CommandResult {
     let mut config = Config::open()?;
-    // for (name, mut account_config) in &config {
-    //     log::debug!("Fetching new items from {:?}", name);
-    //     let new_top_favourite = fetch_account(&mut account_config)?;
-    //     // XXX implement
-    //     // config.set_new_favourite(new_top_favourite);
-    // }
+    for (name, mut account_config) in config.into_iter() {
+        log::debug!("Fetching new items from {:?}", name);
+        let new_top_favourite = fetch_account_favourites(&mut account_config)?;
+        //     // XXX implement
+        //     // config.set_new_favourite(new_top_favourite);
+    }
     config.save()?;
     Ok(())
 }

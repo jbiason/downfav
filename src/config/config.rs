@@ -16,6 +16,8 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+// use std::collections::hash_map::IntoIter;
+use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
@@ -95,5 +97,14 @@ impl Config {
         let mut fp = File::create(filename)?;
         fp.write_all(content.as_bytes())?;
         Ok(())
+    }
+}
+
+impl<'a> IntoIterator for &'a Config {
+    type Item = (&'a String, &'a AccountConfig);
+    type IntoIter = Iter<'a, String, AccountConfig>;
+
+    fn into_iter(self) -> Iter<'a, String, AccountConfig> {
+        self.0.iter()
     }
 }
