@@ -17,7 +17,7 @@
 */
 
 // use std::collections::hash_map::IntoIter;
-use std::collections::hash_map::Iter;
+use std::collections::hash_map::IterMut;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
@@ -89,6 +89,15 @@ impl Config {
         }
     }
 
+    /// Set the a last seen favourite for the account
+    #[logfn_inputs(Trace)]
+    pub fn set_new_favourite(&mut self, account: &str, favourite: &str) {
+        match self.0.get_mut(account.into()) {
+            Some(account_config) => account_config.set_favourite(favourite),
+            None => {}
+        }
+    }
+
     /// Save the current configuration file.
     pub fn save(&self) -> Result<(), ConfigError> {
         let content = toml::to_string(&self.0)?;
@@ -100,11 +109,11 @@ impl Config {
     }
 }
 
-impl<'a> IntoIterator for &'a Config {
-    type Item = (&'a String, &'a AccountConfig);
-    type IntoIter = Iter<'a, String, AccountConfig>;
+impl<'a> IntoIterator for &'a mut Config {
+    type Item = (&'a String, &'a mut AccountConfig);
+    type IntoIter = IterMut<'a, String, AccountConfig>;
 
-    fn into_iter(self) -> Iter<'a, String, AccountConfig> {
-        self.0.iter()
+    fn into_iter(self) -> IterMut<'a, String, AccountConfig> {
+        self.0.iter_mut()
     }
 }
