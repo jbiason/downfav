@@ -26,7 +26,7 @@ pub struct Favourite {
 }
 
 impl Favourite {
-    /// Return the last favourite
+    /// Return the last favourite.
     ///
     /// For example, if there is a favourite ID, returns it.
     ///
@@ -46,5 +46,10 @@ impl Favourite {
             Some(last) => last.to_string(),
             None => "0".into(),
         }
+    }
+
+    /// Set the last seen favourite.
+    pub fn set(&mut self, last: &str) {
+        self.last = Some(last.into());
     }
 }

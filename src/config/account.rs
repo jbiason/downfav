@@ -52,6 +52,11 @@ impl AccountConfig {
         self.favourite.last()
     }
 
+    #[logfn_inputs(Trace)]
+    pub fn set_favourite(&mut self, favourite: &str) {
+        self.favourite.set(favourite);
+    }
+
     /// The Mastodon configuration for the account.
     pub fn mastodon(&self) -> Data {
         self.mastodon.clone()

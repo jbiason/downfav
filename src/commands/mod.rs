@@ -166,18 +166,19 @@ fn fetch_all() -> CommandResult {
     for (name, mut account_config) in config.into_iter() {
         log::debug!("Fetching new items from {:?}", name);
         let new_top_favourite = fetch_account_favourites(&mut account_config)?;
-        //     // XXX implement
-        //     // config.set_new_favourite(new_top_favourite);
+        config.set_new_favourite(name, &new_top_favourite);
     }
     config.save()?;
     Ok(())
 }
 
-fn fetch_account(account: &str) -> CommandResult {
+fn fetch_account(_account: &str) -> CommandResult {
     Ok(())
 }
 
-fn fetch_account_favourites(account: &mut AccountConfig) -> CommandResult {
+fn fetch_account_favourites(
+    account: &mut AccountConfig,
+) -> Result<String, CommandError> {
     // XXX before anything, we could check if there is any storage enabled.
     // XXX we could create a list of storages, so after retrieving the toot
     //     and converting to our format, we just go through this list and call
@@ -194,7 +195,7 @@ fn fetch_account_favourites(account: &mut AccountConfig) -> CommandResult {
             most_recent = Some((&toot.id).into());
         }
 
-        let conversion = Data::from(&toot);
+        let _conversion = Data::from(&toot);
 
         // XXX storage here
         // storage.save(&conversion)
@@ -202,6 +203,6 @@ fn fetch_account_favourites(account: &mut AccountConfig) -> CommandResult {
     Ok(())
 }
 
-fn sync_account(account: &str) -> CommandResult {
+fn sync_account(_account: &str) -> CommandResult {
     Ok(())
 }
