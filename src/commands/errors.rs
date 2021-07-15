@@ -32,6 +32,9 @@ pub enum CommandError {
 
     /// The storage type requested does not exist
     NoSuchStorage,
+
+    /// No new favourite
+    NoNewFavourite,
 }
 
 impl From<elefren::Error> for CommandError {

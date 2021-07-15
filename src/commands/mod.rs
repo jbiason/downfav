@@ -18,6 +18,7 @@
 
 pub mod errors;
 
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::io;
 use std::io::prelude::*;
@@ -162,11 +163,23 @@ fn add_storage(account: &str, storage: &StorageType) -> CommandResult {
 }
 
 fn fetch_all() -> CommandResult {
-    let mut config = Config::open()?;
-    for (name, mut account_config) in config.into_iter() {
+    // So, retrieve the favourites and get the latest seen...
+    let config = Config::open()?;
+    let mut favourites: HashMap<String, String> = HashMap::new();
+    for (name, account_config) in config.into_iter() {
         log::debug!("Fetching new items from {:?}", name);
-        let new_top_favourite = fetch_account_favourites(&mut account_config)?;
-        config.set_new_favourite(name, &new_top_favourite);
+        match fetch_account_favourites(&account_config) {
+            Some(new_favourite) => {
+                favourites.insert(name.into(), new_favourite.into());
+            }
+            None => {}
+        }
+    }
+
+    // ... and then update it in the configuration
+    let mut config = Config::open()?;
+    for (account, favourite) in favourites {
+        config.set_new_favourite(&account, &favourite);
     }
     config.save()?;
     Ok(())
@@ -176,9 +189,7 @@ fn fetch_account(_account: &str) -> CommandResult {
     Ok(())
 }
 
-fn fetch_account_favourites(
-    account: &mut AccountConfig,
-) -> Result<String, CommandError> {
+fn fetch_account_favourites(account: &AccountConfig) -> Option<String> {
     // XXX before anything, we could check if there is any storage enabled.
     // XXX we could create a list of storages, so after retrieving the toot
     //     and converting to our format, we just go through this list and call
@@ -186,7 +197,7 @@ fn fetch_account_favourites(
     let top = account.top_favourite();
     let mut most_recent: Option<String> = None;
     let client = Mastodon::from(account.mastodon());
-    for toot in client.favourites()?.items_iter() {
+    for toot in client.favourites().ok()?.items_iter() {
         if toot.id == top {
             break;
         }
@@ -195,12 +206,13 @@ fn fetch_account_favourites(
             most_recent = Some((&toot.id).into());
         }
 
-        let _conversion = Data::from(&toot);
+        let conversion = Data::from(&toot);
+        println!("Found new favourite: {}", conversion.id);
 
         // XXX storage here
         // storage.save(&conversion)
     }
-    Ok(())
+    most_recent
 }
 
 fn sync_account(_account: &str) -> CommandResult {

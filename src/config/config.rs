@@ -16,8 +16,7 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// use std::collections::hash_map::IntoIter;
-use std::collections::hash_map::IterMut;
+use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
@@ -109,11 +108,11 @@ impl Config {
     }
 }
 
-impl<'a> IntoIterator for &'a mut Config {
-    type Item = (&'a String, &'a mut AccountConfig);
-    type IntoIter = IterMut<'a, String, AccountConfig>;
+impl<'a> IntoIterator for &'a Config {
+    type Item = (&'a String, &'a AccountConfig);
+    type IntoIter = Iter<'a, String, AccountConfig>;
 
-    fn into_iter(self) -> IterMut<'a, String, AccountConfig> {
-        self.0.iter_mut()
+    fn into_iter(self) -> Iter<'a, String, AccountConfig> {
+        self.0.iter()
     }
 }
