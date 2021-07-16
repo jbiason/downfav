@@ -32,6 +32,8 @@ use crate::config::config::Config;
 use crate::config::Configurable;
 use crate::storage::data::Data;
 use crate::storage::markdown::config::MarkdownConfig;
+use crate::storage::markdown::storage::Markdown;
+use crate::storage::storage::Storage;
 
 type CommandResult = Result<(), CommandError>;
 
@@ -197,6 +199,10 @@ fn fetch_account_favourites(account: &AccountConfig) -> Option<String> {
     let top = account.top_favourite();
     let mut most_recent: Option<String> = None;
     let client = Mastodon::from(account.mastodon());
+    let markdown_storage = match account.markdown() {
+        Some(config) => Some(Markdown::new(&config)),
+        None => None,
+    };
     for toot in client.favourites().ok()?.items_iter() {
         if toot.id == top {
             break;
@@ -209,8 +215,9 @@ fn fetch_account_favourites(account: &AccountConfig) -> Option<String> {
         let conversion = Data::from(&toot);
         println!("Found new favourite: {}", conversion.id);
 
-        // XXX storage here
-        // storage.save(&conversion)
+        if let Some(storage) = markdown_storage.as_ref() {
+            storage.save(&conversion);
+        }
     }
     most_recent
 }

@@ -67,4 +67,10 @@ impl AccountConfig {
     pub fn set_markdown(&mut self, config: MarkdownConfig) {
         self.markdown = Some(config);
     }
+
+    /// Return the Markdown configuration.
+    #[logfn(Trace)]
+    pub fn markdown(&self) -> &Option<MarkdownConfig> {
+        &self.markdown
+    }
 }
