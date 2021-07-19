@@ -32,6 +32,7 @@ use serde_derive::Serialize;
 use super::account::AccountConfig;
 use crate::config::errors::ConfigError;
 use crate::storage::markdown::config::MarkdownConfig;
+use crate::storage::org::config::OrgConfig;
 
 /// The main configuration
 #[derive(Serialize, Deserialize, Debug)]
@@ -84,6 +85,33 @@ impl Config {
     ) {
         match self.0.get_mut(account.into()) {
             Some(account_config) => account_config.set_markdown(config),
+            None => {}
+        }
+    }
+
+    /// Remove the Markdown storage from the account.
+    #[logfn_inputs(Trace)]
+    pub fn remove_storage_markdown(&mut self, account: &str) {
+        match self.0.get_mut(account.into()) {
+            Some(account_config) => account_config.remove_markdown(),
+            None => {}
+        }
+    }
+
+    /// Set the configuration for the Org storage.
+    #[logfn_inputs(Trace)]
+    pub fn set_storage_org(&mut self, account: &str, config: OrgConfig) {
+        match self.0.get_mut(account.into()) {
+            Some(account_config) => account_config.set_org(config),
+            None => {}
+        }
+    }
+
+    /// Remove the Org storage.
+    #[logfn_inputs(Trace)]
+    pub fn remove_storage_org(&mut self, account: &str) {
+        match self.0.get_mut(account.into()) {
+            Some(account_config) => account_config.remove_org(),
             None => {}
         }
     }

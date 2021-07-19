@@ -25,22 +25,22 @@ use serde_derive::Serialize;
 use crate::config::errors::ConfigError;
 use crate::config::Configurable;
 
-/// Configuration for the Markdown backend
+/// Configuration for the Org backend
 #[derive(Serialize, Deserialize, Debug)]
-pub struct MarkdownConfig {
-    /// Path where files will be stored.
+pub struct OrgConfig {
     pub path: String,
 }
 
-impl Configurable for MarkdownConfig {
+impl Configurable for OrgConfig {
     #[logfn(Trace)]
     fn config() -> Result<Self, ConfigError> {
-        print!("Base path for your files: ");
+        print!("Base path for Org files: ");
         std::io::stdout().flush().expect("Failed to flush stdout!");
 
         let mut path = String::new();
         std::io::stdin().read_line(&mut path)?;
         let fullpath = shellexpand::full(path.trim())?;
+        log::debug!("Full path: {:?}", fullpath);
         Ok(Self {
             path: fullpath.into(),
         })

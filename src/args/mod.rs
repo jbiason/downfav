@@ -102,6 +102,15 @@ pub fn parse() -> Result<Command, ParsingError> {
                         StorageType::try_from(storage)?,
                     ))
                 }
+                ("remove", Some(remove_args)) => {
+                    let storage = remove_args
+                        .subcommand_name()
+                        .ok_or(ParsingError::UnknownCommand)?;
+                    Ok(Command::remove_storage(
+                        account_name.into(),
+                        StorageType::try_from(storage)?,
+                    ))
+                }
                 _ => unimplemented!(),
             },
             ("fetch", _) => Ok(Command::fetch(account_name.into())),

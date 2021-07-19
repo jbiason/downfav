@@ -31,7 +31,7 @@ use markup5ever_rcdom::Handle;
 use markup5ever_rcdom::NodeData;
 use markup5ever_rcdom::RcDom;
 
-use crate::config::OrgConfig;
+use super::config::OrgConfig;
 use crate::storage::data::Data;
 use crate::storage::storage::Storage;
 
@@ -132,16 +132,22 @@ fn walk(input: &Handle, result: &mut String) {
 }
 
 impl Org {
-    pub(crate) fn new_from_config(config: &OrgConfig) -> Org {
+    pub(crate) fn new(config: &OrgConfig) -> Org {
         let now = Utc::now();
-        let filename = format!("{:>04}{:>02}{:>02}.org", now.year(), now.month(), now.day());
-        let date = format!("{:>04}-{:>02}-{:>02}", now.year(), now.month(), now.day());
-        let full_path = Path::new(&config.location).join(&filename);
+        let filename = format!(
+            "{:>04}{:>02}{:>02}.org",
+            now.year(),
+            now.month(),
+            now.day()
+        );
+        let date =
+            format!("{:>04}-{:>02}-{:>02}", now.year(), now.month(), now.day());
+        let full_path = Path::new(&config.path).join(&filename);
         log::debug!("Org file: {}", full_path.to_string_lossy());
 
         Org {
-            path: Path::new(&config.location).to_path_buf(),
-            filename: filename,
+            path: Path::new(&config.path).to_path_buf(),
+            filename,
             date,
         }
     }
@@ -164,8 +170,10 @@ impl Org {
                     .create(true)
                     .open(&org_file)
                     .map(|mut fp| {
-                        let text =
-                            format!("#+title: Favourites from {date}\n\n", date = &self.date);
+                        let text = format!(
+                            "#+title: Favourites from {date}\n\n",
+                            date = &self.date
+                        );
                         fp.write_all(text.as_bytes()).unwrap();
                         fp
                     })
@@ -226,7 +234,10 @@ impl Dump<'_> {
                 let filename = attachment.filename().to_string();
                 let storage_name = format!("{}-{}", &self.record.id, &filename);
                 let in_storage = self.path.join(&storage_name);
-                log::debug!("Saving attachment in {}", in_storage.to_string_lossy());
+                log::debug!(
+                    "Saving attachment in {}",
+                    in_storage.to_string_lossy()
+                );
                 let mut target = File::create(&in_storage).unwrap();
                 log::debug!(
                     "Downloading attachment {} as {}",

@@ -24,6 +24,7 @@ use serde_derive::Serialize;
 
 use super::favourite::Favourite;
 use crate::storage::markdown::config::MarkdownConfig;
+use crate::storage::org::config::OrgConfig;
 
 /// Account configuration
 #[derive(Serialize, Deserialize, Debug)]
@@ -32,7 +33,7 @@ pub struct AccountConfig {
     mastodon: Data,
     markdown: Option<MarkdownConfig>,
     // joplin: Option<JoplinConfig>,
-    // org: Option<OrgConfig>,
+    org: Option<OrgConfig>,
 }
 
 impl AccountConfig {
@@ -43,6 +44,7 @@ impl AccountConfig {
             mastodon: configuration,
             favourite: Favourite::default(),
             markdown: None,
+            org: None,
         }
     }
 
@@ -68,9 +70,31 @@ impl AccountConfig {
         self.markdown = Some(config);
     }
 
+    /// Remove the Markdown configuration.
+    #[logfn_inputs(Trace)]
+    pub fn remove_markdown(&mut self) {
+        self.markdown = None;
+    }
+
     /// Return the Markdown configuration.
     #[logfn(Trace)]
     pub fn markdown(&self) -> &Option<MarkdownConfig> {
         &self.markdown
+    }
+
+    /// Set the Org configuration.
+    #[logfn_inputs(Trace)]
+    pub fn set_org(&mut self, config: OrgConfig) {
+        self.org = Some(config);
+    }
+
+    /// Remove the Org configuration.
+    pub fn remove_org(&mut self) {
+        self.org = None;
+    }
+
+    /// Return the Org configuration.
+    pub fn org(&self) -> &Option<OrgConfig> {
+        &self.org
     }
 }

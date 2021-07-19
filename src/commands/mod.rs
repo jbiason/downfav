@@ -33,6 +33,8 @@ use crate::config::Configurable;
 use crate::storage::data::Data;
 use crate::storage::markdown::config::MarkdownConfig;
 use crate::storage::markdown::storage::Markdown;
+use crate::storage::org::config::OrgConfig;
+use crate::storage::org::storage::Org;
 use crate::storage::storage::Storage;
 
 type CommandResult = Result<(), CommandError>;
@@ -75,6 +77,9 @@ pub enum Command {
     /// Add a storage in an account.
     AddStorage(String, StorageType),
 
+    /// Remove a storage in an account.
+    RemoveStorage(String, StorageType),
+
     /// Fetch favourites from all accounts.
     FetchAll,
 
@@ -98,6 +103,10 @@ impl Command {
         Command::AddStorage(account.into(), storage)
     }
 
+    pub fn remove_storage(account: &str, storage: StorageType) -> Self {
+        Command::RemoveStorage(account.into(), storage)
+    }
+
     pub fn fetch_all() -> Self {
         Command::FetchAll
     }
@@ -117,6 +126,9 @@ impl Command {
             Command::RemoveAccount(name) => remove_account(name),
             Command::AddStorage(account, storage) => {
                 add_storage(account, storage)
+            }
+            Command::RemoveStorage(account, storage) => {
+                remove_storage(account, storage)
             }
             Command::FetchAll => fetch_all(),
             Command::Fetch(account) => fetch_account(account),
@@ -157,6 +169,25 @@ fn add_storage(account: &str, storage: &StorageType) -> CommandResult {
         StorageType::Markdown => {
             let storage_config = MarkdownConfig::config()?;
             config.set_storage_markdown(account, storage_config);
+        }
+        StorageType::Org => {
+            let storage_config = OrgConfig::config()?;
+            config.set_storage_org(account, storage_config);
+        }
+        _ => unimplemented!(),
+    }
+    config.save()?;
+    Ok(())
+}
+
+fn remove_storage(account: &str, storage: &StorageType) -> CommandResult {
+    let mut config = Config::open()?;
+    match storage {
+        StorageType::Markdown => {
+            config.remove_storage_markdown(account);
+        }
+        StorageType::Org => {
+            config.remove_storage_org(account);
         }
         _ => unimplemented!(),
     }
@@ -203,6 +234,10 @@ fn fetch_account_favourites(account: &AccountConfig) -> Option<String> {
         Some(config) => Some(Markdown::new(&config)),
         None => None,
     };
+    let org_storage = match account.org() {
+        Some(config) => Some(Org::new(&config)),
+        None => None,
+    };
     for toot in client.favourites().ok()?.items_iter() {
         if toot.id == top {
             break;
@@ -216,6 +251,10 @@ fn fetch_account_favourites(account: &AccountConfig) -> Option<String> {
         println!("Found new favourite: {}", conversion.id);
 
         if let Some(storage) = markdown_storage.as_ref() {
+            storage.save(&conversion);
+        }
+
+        if let Some(storage) = org_storage.as_ref() {
             storage.save(&conversion);
         }
     }
