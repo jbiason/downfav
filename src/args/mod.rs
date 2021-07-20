@@ -115,6 +115,7 @@ pub fn parse() -> Result<Command, ParsingError> {
             },
             ("fetch", _) => Ok(Command::fetch(account_name.into())),
             ("sync", _) => Ok(Command::sync(account_name.into())),
+            ("", _) => Ok(Command::fetch(account_name.into())),
             _ => Err(ParsingError::UnknownCommand),
         }
     } else {
