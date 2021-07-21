@@ -18,8 +18,7 @@
 
 pub mod attachment;
 pub mod data;
-pub mod filesystem;
 pub mod helpers;
-pub mod joplin;
+pub mod markdown;
 pub mod org;
 pub mod storage;

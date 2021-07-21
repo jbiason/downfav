@@ -16,15 +16,17 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pub mod account;
-pub mod config;
-pub mod errors;
-pub mod favourite;
+use crate::commands::errors::CommandError;
 
-use self::errors::ConfigError;
+/// Parsing errors
+#[derive(Debug)]
+pub enum ParsingError {
+    /// The command is not recognized
+    UnknownCommand,
+}
 
-pub trait Configurable {
-    fn config() -> Result<Self, ConfigError>
-    where
-        Self: Sized;
+impl From<CommandError> for ParsingError {
+    fn from(_: CommandError) -> Self {
+        Self::UnknownCommand
+    }
 }

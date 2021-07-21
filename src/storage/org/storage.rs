@@ -27,11 +27,12 @@ use std::path::PathBuf;
 use chrono::prelude::*;
 use html5ever::parse_document;
 use html5ever::tendril::TendrilSink;
+use log_derive::logfn;
 use markup5ever_rcdom::Handle;
 use markup5ever_rcdom::NodeData;
 use markup5ever_rcdom::RcDom;
 
-use crate::config::OrgConfig;
+use super::config::OrgConfig;
 use crate::storage::data::Data;
 use crate::storage::storage::Storage;
 
@@ -49,7 +50,7 @@ pub struct Org {
 struct Dump<'a> {
     fp: File,
     record: &'a Data,
-    path: PathBuf,
+    attachment_dir: PathBuf,
 }
 
 /// Simple macro to recursively walk through html5ever nodes
@@ -132,18 +133,31 @@ fn walk(input: &Handle, result: &mut String) {
 }
 
 impl Org {
-    pub(crate) fn new_from_config(config: &OrgConfig) -> Org {
+    pub(crate) fn new(config: &OrgConfig) -> Org {
         let now = Utc::now();
-        let filename = format!("{:>04}{:>02}{:>02}.org", now.year(), now.month(), now.day());
-        let date = format!("{:>04}-{:>02}-{:>02}", now.year(), now.month(), now.day());
-        let full_path = Path::new(&config.location).join(&filename);
+        let filename = format!(
+            "{:>04}{:>02}{:>02}.org",
+            now.year(),
+            now.month(),
+            now.day()
+        );
+        let date =
+            format!("{:>04}-{:>02}-{:>02}", now.year(), now.month(), now.day());
+        let full_path = Path::new(&config.path).join(&filename);
         log::debug!("Org file: {}", full_path.to_string_lossy());
 
         Org {
-            path: Path::new(&config.location).to_path_buf(),
-            filename: filename,
+            path: Path::new(&config.path).to_path_buf(),
+            filename,
             date,
         }
+    }
+
+    #[logfn(Trace)]
+    fn attachment_dir(&self) -> PathBuf {
+        let attachment_dir = self.path.join(&self.date).to_path_buf();
+        std::fs::create_dir_all(&attachment_dir).unwrap();
+        attachment_dir
     }
 
     /// Do the initialization of saving the data in Org format.
@@ -164,8 +178,10 @@ impl Org {
                     .create(true)
                     .open(&org_file)
                     .map(|mut fp| {
-                        let text =
-                            format!("#+title: Favourites from {date}\n\n", date = &self.date);
+                        let text = format!(
+                            "#+title: Favourites from {date}\n\n",
+                            date = &self.date
+                        );
                         fp.write_all(text.as_bytes()).unwrap();
                         fp
                     })
@@ -175,7 +191,7 @@ impl Org {
         Dump {
             fp,
             record,
-            path: self.path.to_path_buf(),
+            attachment_dir: self.attachment_dir(),
         }
     }
 }
@@ -225,8 +241,11 @@ impl Dump<'_> {
             for attachment in self.record.attachments.iter() {
                 let filename = attachment.filename().to_string();
                 let storage_name = format!("{}-{}", &self.record.id, &filename);
-                let in_storage = self.path.join(&storage_name);
-                log::debug!("Saving attachment in {}", in_storage.to_string_lossy());
+                let in_storage = self.attachment_dir.join(&storage_name);
+                log::debug!(
+                    "Saving attachment in {}",
+                    in_storage.to_string_lossy()
+                );
                 let mut target = File::create(&in_storage).unwrap();
                 log::debug!(
                     "Downloading attachment {} as {}",

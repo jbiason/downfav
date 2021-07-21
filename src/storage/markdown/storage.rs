@@ -21,33 +21,43 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
+use log_derive::logfn;
+
+use super::config::MarkdownConfig;
 use crate::storage::data::Data;
 use crate::storage::helpers::make_markdown;
 use crate::storage::storage::Storage;
 
-pub struct Filesystem {}
+pub struct Markdown {
+    path: String,
+}
 
-impl Storage for Filesystem {
+impl Storage for Markdown {
     fn save(&self, data: &Data) {
         self.create_dirs(data);
         self.save_content(data);
         self.save_attachments(data);
+        println!("Saved to {}", self.dir(data).to_string_lossy());
     }
 }
 
-impl Filesystem {
-    pub fn new() -> Self {
-        Self {}
+impl Markdown {
+    pub fn new(config: &MarkdownConfig) -> Self {
+        Self {
+            path: config.path.to_string(),
+        }
     }
 
     /// The directory in which the data from this toot will be saved.
+    #[logfn(Trace)]
     fn dir(&self, data: &Data) -> PathBuf {
-        Path::new("data").join(&data.account).join(&data.id)
+        Path::new(&self.path).join(&data.account).join(&data.id)
     }
 
     /// Make sure the path structure exists for saving the data.
     fn create_dirs(&self, data: &Data) {
-        std::fs::create_dir_all(self.dir(data)).expect("Failed to create storage directory");
+        std::fs::create_dir_all(self.dir(data))
+            .expect("Failed to create storage directory");
     }
 
     /// Save the content in the directory.

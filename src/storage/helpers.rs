@@ -17,6 +17,7 @@
 */
 use crate::storage::data::Data;
 
+// XXX Easily could be tied to the HTML-to-Org parser.
 pub fn make_markdown(status: &Data) -> String {
     let base_content = html2md::parse_html(&status.text);
     let title = &status.title;

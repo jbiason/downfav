@@ -16,15 +16,29 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pub mod account;
-pub mod config;
-pub mod errors;
-pub mod favourite;
+use crate::config::errors::ConfigError;
 
-use self::errors::ConfigError;
+/// Errors for the commands
+#[derive(Debug)]
+pub enum CommandError {
+    /// Error connecting to the Mastodon account
+    ConnectError,
 
-pub trait Configurable {
-    fn config() -> Result<Self, ConfigError>
-    where
-        Self: Sized;
+    /// Configuration file is broken
+    ConfigError(ConfigError),
+
+    /// The storage type requested does not exist
+    NoSuchStorage,
+}
+
+impl From<elefren::Error> for CommandError {
+    fn from(_: elefren::Error) -> CommandError {
+        CommandError::ConnectError
+    }
+}
+
+impl From<ConfigError> for CommandError {
+    fn from(e: ConfigError) -> CommandError {
+        CommandError::ConfigError(e)
+    }
 }

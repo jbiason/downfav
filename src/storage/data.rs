@@ -19,6 +19,8 @@
 use std::convert::From;
 
 use elefren::entities::status::Status;
+use log_derive::logfn;
+use log_derive::logfn_inputs;
 
 use crate::storage::attachment::Attachment;
 
@@ -35,6 +37,8 @@ pub struct Data {
 
 /// Convert the incoming Status from Elefren to ours.
 impl From<&Status> for Data {
+    #[logfn(Trace)]
+    #[logfn_inputs(Trace)]
     fn from(origin: &Status) -> Self {
         Self {
             id: origin.id.to_string(),
