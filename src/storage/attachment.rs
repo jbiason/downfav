@@ -28,6 +28,7 @@ pub struct Attachment {
 
 impl From<&elefren::entities::attachment::Attachment> for Attachment {
     fn from(origin: &elefren::entities::attachment::Attachment) -> Self {
+        // XXX basename of the origin.url here
         println!("Found attachment: {}", origin.url);
         Self {
             url: origin.url.to_string(),
@@ -47,6 +48,7 @@ impl Attachment {
         }
     }
 
+    // XXX unwrap
     pub fn download(&self) -> Response {
         reqwest::Client::builder()
             .timeout(Duration::from_secs(600))

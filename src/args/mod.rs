@@ -62,11 +62,7 @@ pub fn parse() -> Result<Command, ParsingError> {
                         ))
                         .subcommand(SubCommand::with_name("org").about(
                             "Store favourites on the filesystem, as Org files",
-                        ))
-                        .subcommand(
-                            SubCommand::with_name("joplin")
-                                .about("Store favourites on Joplin"),
-                        ),
+                        )),
                 )
                 .subcommand(
                     SubCommand::with_name("remove")
@@ -78,10 +74,6 @@ pub fn parse() -> Result<Command, ParsingError> {
                         .subcommand(
                             SubCommand::with_name("org")
                                 .about("Remove the org storage"),
-                        )
-                        .subcommand(
-                            SubCommand::with_name("joplin")
-                                .about("Remove the joplin storage"),
                         ),
                 ),
         );

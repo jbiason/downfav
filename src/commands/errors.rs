@@ -27,14 +27,8 @@ pub enum CommandError {
     /// Configuration file is broken
     ConfigError(ConfigError),
 
-    /// The requested account does not exist
-    NoSuchAccount,
-
     /// The storage type requested does not exist
     NoSuchStorage,
-
-    /// No new favourite
-    NoNewFavourite,
 }
 
 impl From<elefren::Error> for CommandError {

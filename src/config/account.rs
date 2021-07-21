@@ -32,7 +32,6 @@ pub struct AccountConfig {
     favourite: Favourite,
     mastodon: Data,
     markdown: Option<MarkdownConfig>,
-    // joplin: Option<JoplinConfig>,
     org: Option<OrgConfig>,
 }
 

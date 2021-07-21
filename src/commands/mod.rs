@@ -47,9 +47,6 @@ pub enum StorageType {
 
     /// Store in the filesystem, as Org-Mode.
     Org,
-
-    /// Store in Joplin.
-    Joplin,
 }
 
 impl TryFrom<&str> for StorageType {
@@ -59,7 +56,6 @@ impl TryFrom<&str> for StorageType {
         match s {
             "markdown" => Ok(StorageType::Markdown),
             "org" => Ok(StorageType::Org),
-            "joplin" => Ok(StorageType::Joplin),
             _ => Err(Self::Error::NoSuchStorage),
         }
     }
@@ -174,7 +170,6 @@ fn add_storage(account: &str, storage: &StorageType) -> CommandResult {
             let storage_config = OrgConfig::config()?;
             config.set_storage_org(account, storage_config);
         }
-        _ => unimplemented!(),
     }
     config.save()?;
     Ok(())
@@ -189,7 +184,6 @@ fn remove_storage(account: &str, storage: &StorageType) -> CommandResult {
         StorageType::Org => {
             config.remove_storage_org(account);
         }
-        _ => unimplemented!(),
     }
     config.save()?;
     Ok(())

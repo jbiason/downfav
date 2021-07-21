@@ -22,6 +22,7 @@ pub mod errors;
 pub mod favourite;
 
 use self::errors::ConfigError;
+
 pub trait Configurable {
     fn config() -> Result<Self, ConfigError>
     where
